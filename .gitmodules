@@ -1,0 +1,9 @@
+[submodule "lgi"]
+	path = lgi
+	url = https://github.com/MicroRJ/lgi.git
+[submodule "lui"]
+	path = lui
+	url = https://github.com/MicroRJ/lui.git
+[submodule "miniaudio"]
+	path = miniaudio
+	url = https://github.com/mackron/miniaudio.git
