@@ -1,6 +1,9 @@
-
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
+
+#define ELANG_IMPLEMENTATION
+#include <elang.h>
 
 #define lgi_CLOSE_ON_ESCAPE
 #define lgi_IMPLEMENTATION
@@ -12,17 +15,27 @@
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 
+
+
 #define _log lgi_logFunction
 
 #pragma warning(disable:4100)
+#pragma warning(disable:4101)
+#pragma warning(disable:4189)
+#pragma warning(disable:4244)
 #pragma warning(disable:4702)
 #pragma warning(disable:4716)
+
+/* A node system that allows me to create nodes using GUI,
+	allows me to adjust their properties and connect them
+	however I want */
 
 struct {
 	struct {
 		ma_context context;
 		ma_result lastError;
 		struct {
+			ma_device handle;
 			struct {
 				ma_device_info * array;
 				ma_uint32        count;
@@ -46,51 +59,12 @@ struct {
 #define CHANNELS            2
 #define SAMPLE_RATE         48000
 
-
-float lui_mix(float ratio, float min, float max) {
-	return min + (max - min) * ratio;
-}
-
-float lui_unmix(float val, float min, float max) {
-	return (val - min) / (max - min);
-}
-
-float lui_remix(float val, float val_min, float val_max, float min, float max) {
-	return lui_mix(lui_unmix(val,val_min,val_max),min,max);
-}
-
-float lui_clip(float val, float min, float max) {
-	return val < min ? min : val > max ? max : val;
-}
-
-int slider_(lui_Box b, float min, float max, float *value) {
-	lgi_Global float xclick;
-
-	float xcursor = (float) lgi.Input.Mice.xcursor;
-	float ycursor = (float) lgi.Input.Mice.ycursor;
-	if (lui_testinbox(b,xcursor,ycursor)) {
-		if (lgi_isButtonDown(0)) {
-			if (!lgi_wasButtonDown(0)) {
-				xclick = xcursor;
-			}
-			float xdelta = xcursor - b.x0;
-			*value = lui_remix(xdelta,0,b.x1-b.x0-8.f,min,max);
-		}
-	}
-
-	*value = lui_clip(*value,min,max);
-	lui_Box t = b;
-	t.x0 = lui_remix(*value,min,max,b.x0,b.x1-8.f);
-	t.x1 = t.x0 + 8.f;
-	lui__drawBox(b,lgi_WHITE);
-	lui__drawBox(t,lgi_BLACK);
-	lui__drawBoxOutine(b,lgi_BLACK,4.f);
-	lui__drawText(b,_fmt("%.2fHz",*value));
-
-}
+#include "lui_mix.c"
+#include "widget.c"
+#include "engine.c"
+#include "audio.c"
 
 int pgraph_(lui_Box b, float *samples, int numsamples) {
-	lui__drawBox(b,lgi_WHITE);
 	lui__drawBoxOutine(b,lgi_BLACK,4.f);
 	int resolution = 1024;
 	float window = b.x1 - b.x0;
@@ -113,29 +87,6 @@ int pgraph_(lui_Box b, float *samples, int numsamples) {
 	globalTime += lgi.Time.deltaSeconds;
 }
 
-void writeTestSignal(float *output, int frameCount) {
-	// _log(lgi_INFO,_fmt("Frame Count %i",frameCount));
-	double frequency = App.Audio.TestSignal.frequency;
-	double advance = 1. / (SAMPLE_RATE / frequency);
-
-	double time = App.Audio.TestSignal.time;
-	for (int iFrame = 0; iFrame < frameCount; iFrame += 1) {
-		float sample = (float) (ma_sind(MA_TAU_D * time)) * App.Audio.TestSignal.volume;
-		time += advance;
-		for (int iChannel = 0; iChannel < CHANNELS; iChannel += 1) {
-			output[iFrame*CHANNELS + iChannel] = sample;
-		}
-	}
-	App.Audio.TestSignal.time = time;
-}
-
-void data_callback(ma_device* device, void *output, const void *input, ma_uint32 frameCount) {
-	writeTestSignal(output,frameCount);
-	// if (output != NULL && input != NULL) {
-	// 	MA_COPY_MEMORY(output,input,frameCount*ma_get_bytes_per_frame(device->capture.format,device->capture.channels));
-	// }
-}
-
 void main(int c, char **v)  {
 	lgi_initWindowed(1024,512,"Piano!");
 
@@ -143,49 +94,33 @@ void main(int c, char **v)  {
 	lui.font = fn;
 	lui.textColor = lgi_BLACK;
 
-	App.Audio.TestSignal.frequency = 110;
-	App.Audio.TestSignal.volume    = .2f;
+	audiobegin();
 
-	App.Audio.lastError = ma_context_init(NULL,0,NULL,&App.Audio.context);
-	App.Audio.lastError = ma_context_get_devices(&App.Audio.context
-	,	&App.Audio.Device.Playback.array, &App.Audio.Device.Playback.count
-	,	&App.Audio.Device. Capture.array, &App.Audio.Device. Capture.count);
-
-	ma_device_config config = ma_device_config_init(ma_device_type_duplex);
-
-	config.playback.format    = FORMAT;
-	config.playback.channels  = CHANNELS;
-	config.playback.pDeviceID = NULL;
-
-	config.capture. format    = FORMAT;
-	config.capture. channels  = CHANNELS;
-	config.capture. pDeviceID = NULL;
-
-	config.sampleRate         = SAMPLE_RATE;
-	config.dataCallback       = data_callback;
-	config.pUserData          = NULL;
-
-	ma_device device;
-	if (ma_device_init(&App.Audio.context, &config, &device) != MA_SUCCESS) {
-		return;
-	}
-
-	ma_device_start(&device);
 
 
 	do {
-		lgi_clearBackground(lgi_RGBA_U(0xfa,0xfa,0xfa,0xff));
+		lgi_clearBackground(lgi_RGBA_U(0xfa,0xf9,0xf6,0xff));
+
+
+		for (int y=1; y<32; y+=1) {
+			for (int x=1; x<32; x+=1) {
+
+				lgi_Color color = lgi_RGBA(.9f,.9f,.9f,1.f);
+				lgi_drawLine(color,1,0,y*64.f,lgi.Window.size_x,y*64.f);
+				lgi_drawLine(color,1,x*64.f-.5f,0,x*64.f-.5f,lgi.Window.size_y);
+			}
+		}
 
 		lui_inibox();
 		lui_setbox(rect_padd(lui_bbox(0,0,(float)lgi.Window.size_x,(float)lgi.Window.size_y),32.f,32.f));
 
 		lui_cutbox(lui_top,32.f);
-		slider_(lui_cutbox(lui_left,256.f),	1.f,440.f,&App.Audio.TestSignal.frequency);
+		wdg_slider(lui_cutbox(lui_left,256.f),	1.f,440.f,&App.Audio.TestSignal.frequency);
 		lui_popbox();
 		lui_popbox();
 
 		lui_cutbox(lui_top,32.f);
-		slider_(lui_cutbox(lui_left,256.f),	0.f,1.f,&App.Audio.TestSignal.volume);
+		wdg_slider(lui_cutbox(lui_left,256.f),	0.f,1.f,&App.Audio.TestSignal.volume);
 		lui_popbox();
 		lui_popbox();
 
@@ -194,10 +129,10 @@ void main(int c, char **v)  {
 
 		pgraph_(lui_cutbox(lui_top,256.f),NULL,0);
 
+
 	} while (lgi_tick());
 
-
-	ma_device_uninit(&device);
+	audioend();
 }
 
 #if 0
@@ -244,7 +179,7 @@ int main2 (int c, char **v) {
 
 		lgi_Global float slider = 0;
 		// slider = (float) (.5f+.5f*sin(lgi_TAU * lgi.Time.total_seconds));
-		slider_(lui_bbox(24.f,lgi.Window.size_y-128.f,256,32),0,1.,&slider);
+		wdg_slider(lui_bbox(24.f,lgi.Window.size_y-128.f,256,32),0,1.,&slider);
 
 
 		float yboard = 24.f;

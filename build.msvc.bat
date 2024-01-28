@@ -4,7 +4,7 @@
 
 @SETLOCAL
 @SET myCompilerOptions=/options:strict /nologo /TC /Z7 /WX /W4
-@SET myInclude=/I. /I.. /I../lui/ /I../lgi/ /I../miniaudio/ /I../stb /I../lui/freetype/include
+@SET myInclude=/I. /I.. /I../lui/ /I../lgi/ /I../elang/ /I../miniaudio/ /I../stb /I../lui/freetype/include
 @SET myCommon=%myCompilerOptions% %myInclude%
 @SET myLibs=/LIBPATH:../lui/freetype
 @SET myLinkerOptions=/INCREMENTAL:NO %myLibs%

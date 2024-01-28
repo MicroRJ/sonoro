@@ -7,3 +7,6 @@
 [submodule "miniaudio"]
 	path = miniaudio
 	url = https://github.com/mackron/miniaudio.git
+[submodule "elang"]
+	path = elang
+	url = https://github.com/MicroRJ/elang
