@@ -15,20 +15,31 @@
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 
+#define _log lgi_logInfo
 
-
-#define _log lgi_logFunction
+// char *nstr(char const *s) {
+// 	int l = (int) strlen(s);
+// 	char *r = malloc(l+1);
+// 	strncpy(r,s,l+1);
+// 	return r;
+// }
 
 #pragma warning(disable:4100)
 #pragma warning(disable:4101)
 #pragma warning(disable:4189)
+#pragma warning(disable:4201)
 #pragma warning(disable:4244)
 #pragma warning(disable:4702)
 #pragma warning(disable:4716)
 
-/* A node system that allows me to create nodes using GUI,
-	allows me to adjust their properties and connect them
-	however I want */
+lgi_API void drawboxoutline(lui_Box b, float thickness, lgi_Color color) {
+	lgi_drawQuad(color,b.x0-thickness,b.y1          ,b.x1-b.x0+thickness*2,thickness);
+	lgi_drawQuad(color,b.x0-thickness,b.y0-thickness,b.x1-b.x0+thickness*2,thickness);
+	lgi_drawQuad(color,b.x0-thickness,b.y0,thickness,b.y1-b.y0);
+	lgi_drawQuad(color,b.x1          ,b.y0,thickness,b.y1-b.y0);
+}
+
+
 
 struct {
 	struct {
@@ -60,59 +71,99 @@ struct {
 #define SAMPLE_RATE         48000
 
 #include "lui_mix.c"
-#include "widget.c"
-#include "engine.c"
 #include "audio.c"
-
-int pgraph_(lui_Box b, float *samples, int numsamples) {
-	lui__drawBoxOutine(b,lgi_BLACK,4.f);
-	int resolution = 1024;
-	float window = b.x1 - b.x0;
-	float pixelScale = window / resolution;
-	float frequency = App.Audio.TestSignal.frequency;
-	float volume = App.Audio.TestSignal.volume;
-	/* By Using SAMPLE_RATE, We're Essentially Using Some Imaginary
- 	Window SAMPLE_RATE Long (One Second Long), But We're Only Rendering The Visible Portion */
-	double timeStep = 1. / (SAMPLE_RATE / frequency);
-	double localTime = 0;
-	lgi_Global double globalTime = 0.;
-	for (int i=0; i<resolution; i+=1) {
-		float sample = (float)ma_sind(MA_TAU_D * (globalTime + localTime)) * volume;
-		float y = lui_remix(sample,-2.f,+2.f,b.y0,b.y1);
-		localTime += timeStep;
-		float x = b.x0 + i*pixelScale;
-		lgi_drawCircleSDF((vec2){x,y},(vec2){1,1},lgi_BLACK,1.f,1.f);
-		// lui__drawBox(lui_bbox(x,y,6,6),lgi_BLACK);
-	}
-	globalTime += lgi.Time.deltaSeconds;
-}
+#include <theme.h>
+#include <n_node.c>
+#include <n_math.c>
+#include <n_slider.c>
+#include <n_graph.c>
+#include <n_osc.c>
+#include "engine.c"
 
 void main(int c, char **v)  {
 	lgi_initWindowed(1024,512,"Piano!");
 
-	lui_Font *fn = lui_loadFont("lui\\assets\\CascadiaCode\\CascadiaCode.ttf",24);
+	lui_Font *fn = lui_loadFont("lui\\assets\\CascadiaCode\\CascadiaCode.ttf",18);
 	lui.font = fn;
 	lui.textColor = lgi_BLACK;
 
 	audiobegin();
+
+	addnode(numnode(0));
+	addnode(numnode(1));
+	addnode(minnode());
+	addnode(minnode());
+	addnode(graphnode("graph",1024));
+	addnode(oscnode(440));
+
+	t_node *frq = slidernode("Hz",1,440,110);
+	t_node *dbv = slidernode("Db",0,1,.2f);
+	addnode(frq);
+	addnode(dbv);
+
+	addedge(drawlist[0],0,drawlist[2],0);
+	addedge(drawlist[1],0,drawlist[2],1);
+	addedge(drawlist[2],0,drawlist[3],0);
+	addedge(drawlist[1],0,drawlist[3],1);
 
 
 
 	do {
 		lgi_clearBackground(lgi_RGBA_U(0xfa,0xf9,0xf6,0xff));
 
-
+		lgi_Color color = lgi_RGBA(.956f,.956f,.956f,1.f);
 		for (int y=1; y<32; y+=1) {
-			for (int x=1; x<32; x+=1) {
-
-				lgi_Color color = lgi_RGBA(.9f,.9f,.9f,1.f);
-				lgi_drawLine(color,1,0,y*64.f,lgi.Window.size_x,y*64.f);
-				lgi_drawLine(color,1,x*64.f-.5f,0,x*64.f-.5f,lgi.Window.size_y);
-			}
+			lgi_drawLine(color,1,0,y*32.f,lgi.Window.size_x,y*32.f);
+		}
+		for (int x=1; x<32; x+=1) {
+			lgi_drawLine(color,1,x*32.f-.5f,0,x*32.f-.5f,lgi.Window.size_y);
 		}
 
+		if (lgi_testKey(' ')) {
+			exec();
+
+		}
+		App.Audio.TestSignal.frequency = ((t_slider *)frq)->val;
+
+
+		lgi_clearBackground(UI_COLOR_BACKGROUND);
+
+#if 1
+		if (selinletnode != lgi_Null) {
+			float xcursor = (float) lgi.Input.Mice.xcursor;
+			float ycursor = (float) lgi.Input.Mice.ycursor;
+			t_box in = getinletbox(nodebox(selinletnode),selinletslot);
+			lgi_drawLine(lgi_RED,2.f,in.x0,in.y0,xcursor,ycursor);
+
+			for (int i=0; i<arrlen(drawlist); i+=1) {
+				t_node *t = drawlist[i];
+				if (t == selinletnode) continue;
+				lui_Box b = t->box;
+
+				for (int j=0; j<t->numoutlets; j+=1) {
+					lui_Box h = lui_bbox(b.x0+4+j*16+j*8,b.y0,16,8);
+					// lui__drawBox(h,lgi_GREEN);
+					if (lui_testinbox(h,xcursor,ycursor)) {
+
+						/* We're drawing an inlet to an outlet */
+						addedge(t,j,selinletnode,selinletslot);
+
+						lgi_logInfo("attached!");
+						selinletnode = lgi_Null;
+						selinletslot = 0;
+						break;
+					}
+				}
+			}
+		}
+#endif
+		for (int i=0; i<arrlen(drawlist); i+=1) {
+			drawnode(drawlist[i]);
+		}
+
+#if 0
 		lui_inibox();
-		lui_setbox(rect_padd(lui_bbox(0,0,(float)lgi.Window.size_x,(float)lgi.Window.size_y),32.f,32.f));
+		lui_setbox(lui_Box_enlarge(lui_bbox(0,0,(float)lgi.Window.size_x,(float)lgi.Window.size_y),32.f,32.f));
 
 		lui_cutbox(lui_top,32.f);
 		wdg_slider(lui_cutbox(lui_left,256.f),	1.f,440.f,&App.Audio.TestSignal.frequency);
@@ -128,7 +179,7 @@ void main(int c, char **v)  {
 		lui_popbox();
 
 		pgraph_(lui_cutbox(lui_top,256.f),NULL,0);
-
+#endif
 
 	} while (lgi_tick());
 
