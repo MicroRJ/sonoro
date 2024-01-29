@@ -1,19 +1,24 @@
 
-typedef struct t_graph {
-	t_node node;
-	int samples;
-} t_graph;
+t_node *graphconstructor(t_class *c) {
+	return newnode(c, lgi_Null, lui_bbox(32.f,32.f,32*8,32*4));
+}
 
-void graphproc(t_node *n, int k) {
+t_node *graphnode(char const *label, int samples) {
+	t_graph *m = (t_graph *) graphconstructor(n_getclass("graph"));
+	m->samples = samples;
+	return (t_node *) m;
+}
+
+void graphmethod(t_node *n, int k) {
 	t_graph *m = (t_graph*) n;
 	switch (k) {
 		case CALL: {
-			int c = popf();
+			int c = d_popint();
 			while (c --) pop();
 		} break;
 		case DRAW: {
 			dragnode_(n);
-			drawnode_(n);
+			drawbasenode(n);
 
 			t_box b = nodebox(n);
 			float window = b.x1 - b.x0;
@@ -38,11 +43,5 @@ void graphproc(t_node *n, int k) {
 	}
 }
 
-t_node *graphnode(char const *label, int samples) {
-	t_graph *m = malloc(sizeof(t_graph));
-	initnode((t_node*) m, label, graphproc, 1, 0, lui_bbox(32.f,32.f,32*8,32*4));
-	m->samples = samples;
-	return (t_node *) m;
-}
 
 

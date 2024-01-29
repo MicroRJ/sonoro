@@ -1,15 +1,24 @@
 
-typedef struct t_slider {
-	t_node node;
-	float min,max,val;
-} t_slider;
+t_node *sliderconstructor(t_class *c) {
+	return newnode(c, lgi_Null, lui_bbox(32.f,32.f,32*6,32));
+}
 
-int sliderproc(t_node *n, int k) {
+t_node *slidernode(char const *label, float min, float max, float val) {
+	t_slider *m = (t_slider *) sliderconstructor(n_getclass("slider"));
+	m->min = min;
+	m->max = max;
+	m->val = val;
+
+	return (t_node *) m;
+}
+
+void slidermethod(t_node *n, int k) {
 	t_slider *s = (t_slider *) n;
 	switch (k) {
 		case CALL: {
-			int c = popi();
-			putf(s->val);
+			int c = d_popint();
+			while (c --) pop();
+			d_putfloat(s->val);
 		} break;
 		case DRAW: {
 			int dragging = dragnode_(n);
@@ -37,7 +46,7 @@ int sliderproc(t_node *n, int k) {
 			t.x0 = lui_remix(s->val,s->min,s->max,b.x0,b.x1-8.f);
 			t.x1 = t.x0 + 8.f;
 
-			drawnode_(n);
+			drawbasenode(n);
 			lui__drawBox(t,lgi_BLACK);
 
 			lui_Box l = b;
@@ -47,47 +56,25 @@ int sliderproc(t_node *n, int k) {
 
 		} break;
 	}
-
-	return 1;
 }
 
-t_node *slidernode(char const *label, float min, float max, float val) {
-	t_slider *m = malloc(sizeof(t_slider));
-	initnode((t_node*) m, label, sliderproc, 1, 1, lui_bbox(32.f,32.f,32*6,32));
-	m->min = min;
-	m->max = max;
-	m->val = val;
-
-	return (t_node *) m;
+void sliderexportmethod(t_node *n, t_exporter *e) {
+	t_slider *slider = (t_slider *) n;
+	exportbasenode(n,e);
+	d_putfloat(slider->min); ini_writefield(e,"min");
+	d_putfloat(slider->max); ini_writefield(e,"max");
+	d_putfloat(slider->val); ini_writefield(e,"val");
 }
-
-
-int wdg_slider(lui_Box b, float min, float max, float *value) {
-	lgi_Global float xclick;
-
-	float xcursor = (float) lgi.Input.Mice.xcursor;
-	float ycursor = (float) lgi.Input.Mice.ycursor;
-	if (lui_testinbox(b,xcursor,ycursor)) {
-		if (lgi_isButtonDown(0)) {
-			if (!lgi_wasButtonDown(0)) {
-				xclick = xcursor;
-			}
-			float xdelta = xcursor - b.x0;
-			*value = lui_remix(xdelta,0,b.x1-b.x0-8.f,min,max);
-		}
+t_node *sliderimportmethod(t_class *c, t_importer *i) {
+	t_slider *slider = (t_slider *) importbasenode(c,i);
+	char b[MAX_NAME];
+	while (ini_nextfield(i,b)) {
+		if (!strcmp(b,"min")) slider->min = popf(); else
+		if (!strcmp(b,"max")) slider->max = popf(); else
+		if (!strcmp(b,"val")) slider->val = popf(); else
+		_log("no such field");
 	}
-
-	*value = lui_clip(*value,min,max);
-	lui_Box t = b;
-	t.x0 = lui_remix(*value,min,max,b.x0,b.x1-8.f);
-	t.x1 = t.x0 + 8.f;
-	// lui__drawBox(b,lgi_WHITE);
-	lui__drawBox(t,lgi_BLACK);
-	lui__drawBoxOutine(b,lgi_BLACK,4.f);
-	lui_Box l = b;
-	l.x0 = l.x1 + 12.f;
-	l.x1 = l.x0 + 200.f;
-	lui__drawText(l,_fmt("%.2fHz",*value));
-
-	return 1;
+	return (t_node *) slider;
 }
+
+

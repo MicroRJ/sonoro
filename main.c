@@ -29,6 +29,7 @@
 #pragma warning(disable:4189)
 #pragma warning(disable:4201)
 #pragma warning(disable:4244)
+#pragma warning(disable:4267)
 #pragma warning(disable:4702)
 #pragma warning(disable:4716)
 
@@ -70,14 +71,21 @@ struct {
 #define CHANNELS            2
 #define SAMPLE_RATE         48000
 
-#include "lui_mix.c"
-#include "audio.c"
+#include <m_mix.c>
 #include <theme.h>
+#include <d_data.c>
+#include <d_ini.c>
+#include <n_node.h>
 #include <n_node.c>
-#include <n_math.c>
+#include <n_base.c>
+#include <n_global.c>
+#include <n_num.c>
+#include <n_min.c>
 #include <n_slider.c>
 #include <n_graph.c>
 #include <n_osc.c>
+#include <n_dac.c>
+#include "audio.c"
 #include "engine.c"
 
 void main(int c, char **v)  {
@@ -87,24 +95,26 @@ void main(int c, char **v)  {
 	lui.font = fn;
 	lui.textColor = lgi_BLACK;
 
+
+	n_moduleinit();
 	audiobegin();
 
-	addnode(numnode(0));
-	addnode(numnode(1));
-	addnode(minnode());
-	addnode(minnode());
-	addnode(graphnode("graph",1024));
-	addnode(oscnode(440));
+	if(!load()) {
 
-	t_node *frq = slidernode("Hz",1,440,110);
-	t_node *dbv = slidernode("Db",0,1,.2f);
-	addnode(frq);
-	addnode(dbv);
+		// addnode(numnode(0));
+		// addnode(numnode(1));
+		// addnode(minnode());
+		// addnode(minnode());
+		addnode(n_newnode(n_getclass("dac")));
+		addnode(slidernode("Hz",1,440,110));
 
-	addedge(drawlist[0],0,drawlist[2],0);
-	addedge(drawlist[1],0,drawlist[2],1);
-	addedge(drawlist[2],0,drawlist[3],0);
-	addedge(drawlist[1],0,drawlist[3],1);
+		addnode(slidernode("Db",0,1,.2f));
+		addnode(oscnode(440));
+		addnode(graphnode("graph",1024));
+
+		n_addinlet(drawlist[0],0,drawlist[1],0);
+	}
+
 
 
 
@@ -121,9 +131,15 @@ void main(int c, char **v)  {
 
 		if (lgi_testKey(' ')) {
 			exec();
-
 		}
-		App.Audio.TestSignal.frequency = ((t_slider *)frq)->val;
+
+		for (int i=0; i<arrlen(module); i+=1) {
+			if (lgi_testKey('1'+i)) {
+				addnode(n_newnode(module[i]));
+			}
+		}
+
+		// App.Audio.TestSignal.frequency = ((t_slider *)frq)->val;
 
 
 		lgi_clearBackground(UI_COLOR_BACKGROUND);
@@ -140,13 +156,13 @@ void main(int c, char **v)  {
 				if (t == selinletnode) continue;
 				lui_Box b = t->box;
 
-				for (int j=0; j<t->numoutlets; j+=1) {
+				for (int j=0; j<t->pclass->numoutlets; j+=1) {
 					lui_Box h = lui_bbox(b.x0+4+j*16+j*8,b.y0,16,8);
 					// lui__drawBox(h,lgi_GREEN);
 					if (lui_testinbox(h,xcursor,ycursor)) {
 
 						/* We're drawing an inlet to an outlet */
-						addedge(t,j,selinletnode,selinletslot);
+						n_addoutlet(t,j,selinletnode,selinletslot);
 
 						lgi_logInfo("attached!");
 						selinletnode = lgi_Null;
@@ -161,29 +177,11 @@ void main(int c, char **v)  {
 			drawnode(drawlist[i]);
 		}
 
-#if 0
-		lui_inibox();
-		lui_setbox(lui_Box_enlarge(lui_bbox(0,0,(float)lgi.Window.size_x,(float)lgi.Window.size_y),32.f,32.f));
-
-		lui_cutbox(lui_top,32.f);
-		wdg_slider(lui_cutbox(lui_left,256.f),	1.f,440.f,&App.Audio.TestSignal.frequency);
-		lui_popbox();
-		lui_popbox();
-
-		lui_cutbox(lui_top,32.f);
-		wdg_slider(lui_cutbox(lui_left,256.f),	0.f,1.f,&App.Audio.TestSignal.volume);
-		lui_popbox();
-		lui_popbox();
-
-		lui_cutbox(lui_top,32.f);
-		lui_popbox();
-
-		pgraph_(lui_cutbox(lui_top,256.f),NULL,0);
-#endif
-
 	} while (lgi_tick());
 
 	audioend();
+
+	save();
 }
 
 #if 0

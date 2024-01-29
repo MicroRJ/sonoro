@@ -1,7 +1,20 @@
 
+
+
 void writeTestSignal(float *output, int frameCount) {
-	// _log(lgi_INFO,_fmt("Frame Count %i",frameCount));
+
 	double frequency = App.Audio.TestSignal.frequency;
+
+	t_class *dacclass = n_getclass("dac");
+	for (int i=0; i<arrlen(drawlist); i+=1) {
+		t_node *n = drawlist[i];
+		if (n->pclass == dacclass) {
+			frequency = samplenode(n);
+			break;
+		}
+	}
+
+	// _log(lgi_INFO,_fmt("Frame Count %i",frameCount));
 	double advance = 1. / (SAMPLE_RATE / frequency);
 
 	double time = App.Audio.TestSignal.time;
@@ -17,6 +30,8 @@ void writeTestSignal(float *output, int frameCount) {
 
 void audioproc(ma_device* device, void *output, const void *input, ma_uint32 frameCount) {
 	writeTestSignal(output,frameCount);
+
+
 	// if (output != NULL && input != NULL) {
 	// 	MA_COPY_MEMORY(output,input,frameCount*ma_get_bytes_per_frame(device->capture.format,device->capture.channels));
 	// }

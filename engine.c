@@ -1,4 +1,5 @@
 
+#if 0
 void drawengine()  {
 	lgi_Color colorBackground = lgi_RGBA_U(0xfa,0xf9,0xf6,0xff);
 	lgi_Color colorMiddleground = lgi_RGBA_U(0x33,0x33,0x33,0xff);
@@ -59,3 +60,4 @@ void drawengine()  {
 		/* draw the crankpin last */
 	lgi_drawCircleSDF(vec2_xy(xcrankpin,ycrankpin),vec2_xy(4.f,4.f),colorBackground,0.f,2.f);
 }
+#endif
