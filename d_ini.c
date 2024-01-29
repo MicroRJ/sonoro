@@ -22,7 +22,7 @@ void ini_writefield(t_exporter *e, char *name) {
 			}
 		} break;
 		case VFLOAT: {
-			fprintf(e->f,"\t.%s = %f\n",name,popf());
+			fprintf(e->f,"\t.%s = %f\n",name,d_popfloat());
 		} break;
 		case VINT: {
 			fprintf(e->f,"\t.%s = %i\n",name,d_popint());

@@ -1,26 +1,39 @@
 
 t_node *graphconstructor(t_class *c) {
-	return newnode(c, lgi_Null, lui_bbox(32.f,32.f,32*8,32*4));
+	t_graph *g = (t_graph *) baseconstructor(c, lgi_Null, lui_bbox(32.f,32.f,32*8,32*4));
+	g->length = 256;
+	g->buffer = calloc(256,sizeof(float));
+	return (t_node *) g;
 }
 
-t_node *graphnode(char const *label, int samples) {
-	t_graph *m = (t_graph *) graphconstructor(n_getclass("graph"));
-	m->samples = samples;
-	return (t_node *) m;
-}
-
-void graphmethod(t_node *n, int k) {
+int graphmethod(t_node *n, int k) {
+	int result = basemethod(n,k);
 	t_graph *m = (t_graph*) n;
 	switch (k) {
 		case CALL: {
-			int c = d_popint();
-			while (c --) pop();
+			result = d_popint();
+			if (result != 0) {
+				if (m->cursor >= m->length) {
+					m->cursor = 0;
+				}
+				float f = d_popfloat();
+				m->buffer[m->cursor ++] = f;
+				d_putfloat(f);
+			}
 		} break;
 		case DRAW: {
-			dragnode_(n);
-			drawbasenode(n);
-
 			t_box b = nodebox(n);
+
+			float window = b.x1 - b.x0;
+			float pixelscale = window / m->length;
+
+			for (int i=0; i<m->length; i+=1) {
+				float y = lui_remix(m->buffer[i],-2.f,+2.f,b.y0,b.y1);
+				float x = b.x0 + i*pixelscale;
+				lgi_drawCircleSDF((vec2){x,y},(vec2){1,1},lgi_BLACK,1.f,1.f);
+			}
+
+			#if 0
 			float window = b.x1 - b.x0;
 			int resolution = window;
 			float pixelScale = window / resolution;
@@ -39,8 +52,11 @@ void graphmethod(t_node *n, int k) {
 				lgi_drawCircleSDF((vec2){x,y},(vec2){1,1},lgi_BLACK,1.f,1.f);
 			}
 			globalTime += lgi.Time.deltaSeconds;
+			#endif
 		} break;
 	}
+
+	return result;
 }
 
 

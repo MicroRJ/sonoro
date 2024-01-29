@@ -1,6 +1,88 @@
 
 /* default implementations */
 
+int basemethod(t_node *n, int k) {
+	switch (k) {
+		/* the exec method is used to trigger execution of the whole branch,
+		 we first call the top-level nodes recursively and then us. */
+		case EXEC: {
+			int c = 0;
+			for (t_edge *e = n->inlets; e != 0; e = e->list) {
+				c += execnode(e->target);
+			}
+
+			d_putint(c);
+			int r = n->pclass->method(n,CALL);
+			/* check whether this node yielded something when there are no
+			outlets, in which case, cleanup the stack */
+			if (r != 0 && n->outlets == NULL && n->pclass->numoutlets != 0) {
+				r = 0;
+				for (int i=0;i<n->pclass->numoutlets;i+=1) {
+					pop();
+				}
+			}
+			return r;
+		} break;
+		case DRAW: {
+			lui_Box b = nodebox(n);
+
+			if (lgi_testCtrlKey()) {
+				/* make it a little bit easier to click */
+				if (clicked(lui_Box_enlarge(b,32.f,32.f))) {
+					for (int i=0; i<n->pclass->numinlets; i+=1) {
+						if (clicked(lui_Box_enlarge(getinletbox(b,i),8.f,8.f))) {
+							selinletnode = n;
+							selinletslot = i;
+							return lgi_True;
+						}
+					}
+					if (clicked(b)) {
+						dragnodexclick = lgi.Input.Mice.xcursor;
+						dragnodeyclick = lgi.Input.Mice.ycursor;
+						seldragnode = n;
+					}
+				}
+			}
+
+			if (lgi_isButtonReleased(0)) {
+				if (seldragnode == n) {
+					n->box = nodebox(n);
+					seldragnode = lgi_Null;
+				}
+				if (selinletnode == n) {
+					selinletnode = lgi_Null;
+					selinletslot = 0;
+				}
+			}
+
+			/* drawing */
+			lgi_Color color = UI_COLOR_FOREGROUND;
+			drawboxoutline(b,4.f,color);
+
+			for (int i=0; i<n->pclass->numinlets; i+=1) {
+				lui__drawBox(getinletbox(b,i),UI_COLOR_FOREGROUND);
+			}
+			for (int i=0; i<n->pclass->numoutlets; i+=1) {
+				lui__drawBox(getoutletbox(b,i),UI_COLOR_FOREGROUND);
+			}
+
+			for (t_edge *e = n->outlets; e != 0; e = e->list) {
+				t_box o = getoutletbox(b,e->outletslot);
+				t_box i = getinletbox(nodebox(e->target),e->inletslot);
+				lgi_drawLine(UI_COLOR_FOREGROUND,4.f
+				,	o.x0+(o.x1-o.x0)*.5f,o.y0+(o.y1-o.y0)*.5f
+				,	i.x0+(i.x1-i.x0)*.5f,i.y0+(i.y1-i.y0)*.5f);
+			}
+			if (n->label != 0) {
+				lui__drawText(b,n->label);
+			}
+			return seldragnode == n;
+		} break;
+	}
+
+	return 0;
+}
+
 void exportedge(t_node *n, char const *type, t_edge *e, t_exporter *i) {
 	ini_writeheader(i,type);
 	int source = n->id;
@@ -33,16 +115,16 @@ t_edge *importinlet(t_importer *i) {
 }
 
 t_node *importbasenode(t_class *c, t_importer *i) {
-	t_node *n = ininode(c);
+	t_node *n = newobj(c);
 
 	char b[MAX_NAME];
 	while (ini_nextfield(i,b)) {
 		if(!strcmp(b,"id")) n->id = d_popint(); else
 		if(!strcmp(b,"label")) n->label = popx(); else
-		if(!strcmp(b,"b.x0")) n->box.x0 = popf(); else
-		if(!strcmp(b,"b.y0")) n->box.y0 = popf(); else
-		if(!strcmp(b,"b.x1")) n->box.x1 = popf(); else
-		if(!strcmp(b,"b.y1")) n->box.y1 = popf(); else
+		if(!strcmp(b,"b.x0")) n->box.x0 = d_popfloat(); else
+		if(!strcmp(b,"b.y0")) n->box.y0 = d_popfloat(); else
+		if(!strcmp(b,"b.x1")) n->box.x1 = d_popfloat(); else
+		if(!strcmp(b,"b.y1")) n->box.y1 = d_popfloat(); else
 		/* we break here to allow for subclasses
 		 to import their properties */
 		break;
@@ -61,61 +143,3 @@ void exportbasenode(t_node *n, t_exporter *e) {
 	d_putfloat(n->box.y1); ini_writefield(e,"b.y1");
 }
 
-int dragnode_(t_node *n) {
-	lui_Box b = nodebox(n);
-
-	if (lgi_testCtrlKey()) {
-		/* make it a little bit easier to click */
-		if (clicked(lui_Box_enlarge(b,32.f,32.f))) {
-			for (int i=0; i<n->pclass->numinlets; i+=1) {
-				if (clicked(lui_Box_enlarge(getinletbox(b,i),8.f,8.f))) {
-					selinletnode = n;
-					selinletslot = i;
-					return lgi_True;
-				}
-			}
-			if (clicked(b)) {
-				dragnodexclick = lgi.Input.Mice.xcursor;
-				dragnodeyclick = lgi.Input.Mice.ycursor;
-				seldragnode = n;
-			}
-		}
-	}
-
-	if (lgi_isButtonReleased(0)) {
-		if (seldragnode == n) {
-			n->box = nodebox(n);
-			seldragnode = lgi_Null;
-		}
-		if (selinletnode == n) {
-			selinletnode = lgi_Null;
-			selinletslot = 0;
-		}
-	}
-	return seldragnode == n;
-}
-
-void drawbasenode(t_node *n) {
-	lui_Box b = nodebox(n);
-
-	lgi_Color color = UI_COLOR_FOREGROUND;
-	drawboxoutline(b,4.f,color);
-
-	for (int i=0; i<n->pclass->numinlets; i+=1) {
-		lui__drawBox(getinletbox(b,i),UI_COLOR_FOREGROUND);
-	}
-	for (int i=0; i<n->pclass->numoutlets; i+=1) {
-		lui__drawBox(getoutletbox(b,i),UI_COLOR_FOREGROUND);
-	}
-
-	for (t_edge *e = n->outlets; e != 0; e = e->list) {
-		t_box o = getoutletbox(b,e->outletslot);
-		t_box i = getinletbox(nodebox(e->target),e->inletslot);
-		lgi_drawLine(UI_COLOR_FOREGROUND,4.f
-		,	o.x0+(o.x1-o.x0)*.5f,o.y0+(o.y1-o.y0)*.5f
-		,	i.x0+(i.x1-i.x0)*.5f,i.y0+(i.y1-i.y0)*.5f);
-	}
-	if (n->label != 0) {
-		lui__drawText(b,n->label);
-	}
-}

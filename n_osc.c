@@ -1,31 +1,33 @@
 
 t_node *oscconstructor(t_class *c) {
-	return newnode(c, lgi_Null, lui_bbox(32.f,32.f,32*4,32));
+	return baseconstructor(c, lgi_Null, lui_bbox(32.f,32.f,32*4,32));
 }
 
 t_node *oscnode(float hz) {
-	t_osc *m = (t_osc *) oscconstructor(n_getclass("osc"));
+	t_osc *m = (t_osc *) oscconstructor(findclass("osc"));
 	m->hz = hz;
 	return (t_node *) m;
 }
 
-void oscmethod(t_node *n, int k) {
+int oscmethod(t_node *n, int k) {
+	int result = basemethod(n,k);
 	t_osc *m = (t_osc*) n;
 	switch (k) {
 		case CALL: {
 			int c = d_popint();
 			if (c == 1) {
-				m->hz = popf();
-			} else while (c --) pop();
+				m->hz = d_popfloat();
+			}
 
-			d_putfloat(sinf(lgi_TAU * m->time));
-			m->time += 1.f / (SAMPLE_RATE / m->hz);
+			d_putfloat((float) (sin(lgi_TAU * m->time)));
+			m->time += 1. / (SAMPLE_RATE / m->hz);
+			result = 1;
 		} break;
 		case DRAW: {
-			dragnode_(n);
-			drawbasenode(n);
 			lui__drawText(nodebox(n),_fmt("osc~ %.2f",m->hz));
 		} break;
 	}
+
+	return result;
 }
 

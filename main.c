@@ -75,7 +75,9 @@ struct {
 #include <theme.h>
 #include <d_data.c>
 #include <d_ini.c>
+#include <n_object.h>
 #include <n_node.h>
+#include <n_object.c>
 #include <n_node.c>
 #include <n_base.c>
 #include <n_global.c>
@@ -91,13 +93,13 @@ struct {
 void main(int c, char **v)  {
 	lgi_initWindowed(1024,512,"Piano!");
 
-	lui_Font *fn = lui_loadFont("lui\\assets\\CascadiaCode\\CascadiaCode.ttf",18);
+	lui_Font *fn = lui_loadFont("lui\\assets\\CascadiaCode\\static\\CascadiaCode-SemiBold.ttf",18);
 	lui.font = fn;
 	lui.textColor = lgi_BLACK;
 
 
-	n_moduleinit();
-	audiobegin();
+	loadbuiltins();
+
 
 	if(!load()) {
 
@@ -105,18 +107,17 @@ void main(int c, char **v)  {
 		// addnode(numnode(1));
 		// addnode(minnode());
 		// addnode(minnode());
-		addnode(n_newnode(n_getclass("dac")));
+		addnode(newobj(findclass("dac")));
 		addnode(slidernode("Hz",1,440,110));
 
 		addnode(slidernode("Db",0,1,.2f));
 		addnode(oscnode(440));
-		addnode(graphnode("graph",1024));
+		addnode(newobj(findclass("graph")));
 
 		n_addinlet(drawlist[0],0,drawlist[1],0);
 	}
 
-
-
+	audiobegin();
 
 	do {
 		lgi_clearBackground(lgi_RGBA_U(0xfa,0xf9,0xf6,0xff));
@@ -135,7 +136,7 @@ void main(int c, char **v)  {
 
 		for (int i=0; i<arrlen(module); i+=1) {
 			if (lgi_testKey('1'+i)) {
-				addnode(n_newnode(module[i]));
+				addnode(newobj(module[i]));
 			}
 		}
 
