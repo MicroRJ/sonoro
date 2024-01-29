@@ -9,16 +9,19 @@ void writeTestSignal(float *output, int frameCount) {
 	for (int i=0; i<arrlen(drawlist); i+=1) {
 		t_node *n = drawlist[i];
 		if (n->pclass == dacclass) {
+			t_dac *d = (t_dac *) n;
 			for (int iFrame = 0; iFrame < frameCount; iFrame += 1) {
-				int results = 0; // execnode(n);
+				int results = execnode(n);
 				if (results != 0) {
 					float sample = (float) d_popfloat() * App.Audio.TestSignal.volume;
-					for (int iChannel = 0; iChannel < CHANNELS; iChannel += 1) {
-						output[iFrame*CHANNELS + iChannel] = sample;
+					if (d->enabled) {
+						for (int iChannel = 0; iChannel < CHANNELS; iChannel += 1) {
+							output[iFrame*CHANNELS + iChannel] = sample;
+						}
 					}
 				}
 			}
-			break;
+			// break;
 		}
 	}
 	#if 0

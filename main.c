@@ -82,16 +82,23 @@ struct {
 #include <n_base.c>
 #include <n_global.c>
 #include <n_num.c>
+#include <n_toggle.c>
+#include <n_add.c>
 #include <n_min.c>
 #include <n_slider.c>
 #include <n_graph.c>
 #include <n_osc.c>
 #include <n_dac.c>
+
+FILE *samplesfile;
 #include "audio.c"
 #include "engine.c"
 
+
 void main(int c, char **v)  {
 	lgi_initWindowed(1024,512,"Piano!");
+
+	samplesfile = fopen(".smp","wb");
 
 	lui_Font *fn = lui_loadFont("lui\\assets\\CascadiaCode\\static\\CascadiaCode-SemiBold.ttf",18);
 	lui.font = fn;
@@ -183,6 +190,7 @@ void main(int c, char **v)  {
 	audioend();
 
 	save();
+	fclose(samplesfile);
 }
 
 #if 0

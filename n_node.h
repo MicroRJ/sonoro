@@ -51,18 +51,33 @@ void n_addinlet(t_node *inletnode, int inletslot, t_node *outletnode, int outlet
 
 /* builtin nodes */
 
-
+/* can we implement some sort of caching or memoization? */
 typedef struct t_num {
 	t_node node;
 	float num;
 } t_num;
 t_node *numconstructor(t_class *);
 int nummethod(t_node *n, int k);
+
+typedef struct t_toggle {
+	t_node node;
+	int toggled;
+} t_toggle;
+t_node *toggleconstructor(t_class *);
+int togglemethod(t_node *n, int k);
+
+typedef struct t_add {
+	t_node node;
+} t_add;
+t_node *addconstructor(t_class *);
+int addmethod(t_node *n, int k);
+
 typedef struct t_min {
 	t_node node;
 } t_min;
 t_node *minconstructor(t_class *);
 int minmethod(t_node *n, int k);
+
 typedef struct t_osc {
 	t_node node;
 	float hz;
@@ -70,6 +85,7 @@ typedef struct t_osc {
 } t_osc;
 t_node *oscconstructor(t_class *);
 int oscmethod(t_node *n, int k);
+
 typedef struct t_slider {
 	t_node node;
 	float min,max,val;
@@ -78,6 +94,7 @@ t_node *sliderconstructor(t_class *);
 int slidermethod(t_node *n, int k);
 void sliderexportmethod(t_node *n, t_exporter *e);
 t_node *sliderimportmethod(t_class *c, t_importer *i);
+
 typedef struct t_graph {
 	t_node node;
 	float *buffer;
@@ -89,6 +106,7 @@ int graphmethod(t_node *n, int k);
 
 typedef struct t_dac {
 	t_node node;
+	int enabled;
 } t_dac;
 t_node *dacconstructor(t_class *);
 int dacmethod(t_node *n, int k);

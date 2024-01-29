@@ -41,9 +41,11 @@ int execnode(t_node *n) {
 
 void notify(t_node *n) {
 	if (n->outlets == 0 && n->inlets != 0) {
-		_log("notify: %s",n->pclass->name);
-		// __debugbreak();
-		execnode(n);
+		/* otherwise this is a trigger node and we should not mess with it because
+		it could be on a different thread! */
+		if (n->pclass->numoutlets != 0) {
+			execnode(n);
+		}
 		return;
 	}
 
