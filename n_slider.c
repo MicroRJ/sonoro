@@ -1,6 +1,6 @@
 
 t_node *sliderconstructor(t_class *c) {
-	return baseconstructor(c, lgi_Null, lui_bbox(32.f,32.f,32*6,32));
+	return baseconstructor(c, lgi_Null, bbox(32.f,32.f,32*6,32));
 }
 
 t_node *slidernode(char const *label, float min, float max, float val) {
@@ -28,15 +28,14 @@ int slidermethod(t_node *n, int k) {
 
 			if (!result) {
 				lgi_Global float xclick;
-				float xcursor = (float) lgi.Input.Mice.xcursor;
-				float ycursor = (float) lgi.Input.Mice.ycursor;
-				if (lui_testinbox(b,xcursor,ycursor)) {
+				float xcursor = (float) getxcursor();
+				float ycursor = (float) getycursor();
+				if (inbox(b,xcursor,ycursor)) {
 					if (lgi_isButtonDown(0)) {
 						if (!lgi_wasButtonDown(0)) {
 							xclick = xcursor;
 						}
-						float xdelta = xcursor - b.x0;
-						s->val = lui_remix(xdelta,0,b.x1-b.x0-8.f,s->min,s->max);
+						s->val = lui_remix(xcursor-b.x,0,b.zx-8.f,s->min,s->max);
 						notify(n);
 					}
 				}
@@ -44,16 +43,20 @@ int slidermethod(t_node *n, int k) {
 			}
 
 			s->val = lui_clip(s->val,s->min,s->max);
-			lui_Box t = b;
-			t.x0 = lui_remix(s->val,s->min,s->max,b.x0,b.x1-8.f);
-			t.x1 = t.x0 + 8.f;
 
-			lui__drawBox(t,lgi_BLACK);
+			/* draw the thumb */
+			t_box t = b;
+			t.x = lui_remix(s->val,s->min,s->max,b.x,b.x+b.zx-8.f);
+			t.zx = 8.f;
 
+			drawbox(t,lgi_BLACK);
+
+			#if 0
 			lui_Box l = b;
 			l.x0 = l.x1 + 12.f;
 			l.x1 = l.x0 + 200.f;
-			lui__drawText(l,_fmt("%.2fHz",s->val));
+			drawtext(l,_fmt("%.2fHz",s->val));
+			#endif
 		} break;
 	}
 	return result;

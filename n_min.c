@@ -1,6 +1,6 @@
 
 t_node *minconstructor(t_class *c) {
-	return baseconstructor(c, "min", lui_bbox(32.f,32.f,32*4,32));
+	return baseconstructor(c, "min", bbox(32.f,32.f,32*4,32));
 }
 
 t_node *minnode() {

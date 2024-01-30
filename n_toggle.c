@@ -1,6 +1,6 @@
 
 t_node *toggleconstructor(t_class *c) {
-	return baseconstructor(c, lgi_Null, lui_bbox(32.f,32.f,32,32));
+	return baseconstructor(c, lgi_Null, bbox(32.f,32.f,32,32));
 }
 
 int togglemethod(t_node *n, int k) {
@@ -27,7 +27,7 @@ int togglemethod(t_node *n, int k) {
 			if(!m->toggled) {
 				color = UI_COLOR_FADED;
 			}
-			lui__drawBox(lui_Box_shrink(nodebox(n),8.f,8.f),color);
+			drawbox(trimbox(nodebox(n),8.f,8.f),color);
 		} break;
 	}
 	return result;
