@@ -30,7 +30,7 @@ int load() {
 	t_importer i = { buffer };
 	char b[0x100];
 	while (ini_nextheader(&i,b)) {
-		t_class *c = n_getclass(b);
+		t_class *c = findclass(b);
 		if (c != 0) {
 			t_node *n = importnode(c,&i);
 			addnode(n);

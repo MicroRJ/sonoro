@@ -1,19 +1,32 @@
 
 
-
+int sampleindex = 0;
 void writeTestSignal(float *output, int frameCount) {
 
-	double frequency = App.Audio.TestSignal.frequency;
+	// double frequency = App.Audio.TestSignal.frequency;
 
-	t_class *dacclass = n_getclass("dac");
+	t_class *dacclass = findclass("dac");
 	for (int i=0; i<arrlen(drawlist); i+=1) {
 		t_node *n = drawlist[i];
 		if (n->pclass == dacclass) {
-			frequency = samplenode(n);
-			break;
+			t_dac *d = (t_dac *) n;
+			for (int iFrame = 0; iFrame < frameCount; iFrame += 1) {
+				int results = execnode(n);
+				if (results != 0) {
+					float sample = (float) d_popfloat() * App.Audio.TestSignal.volume;
+					if (d->enabled) {
+						fprintf(samplesfile,"%i, %f\n",sampleindex, sample);
+						sampleindex += 1;
+						for (int iChannel = 0; iChannel < CHANNELS; iChannel += 1) {
+							output[iFrame*CHANNELS + iChannel] = sample;
+						}
+					}
+				}
+			}
+			// break;
 		}
 	}
-
+	#if 0
 	// _log(lgi_INFO,_fmt("Frame Count %i",frameCount));
 	double advance = 1. / (SAMPLE_RATE / frequency);
 
@@ -26,6 +39,7 @@ void writeTestSignal(float *output, int frameCount) {
 		}
 	}
 	App.Audio.TestSignal.time = time;
+	#endif
 }
 
 void audioproc(ma_device* device, void *output, const void *input, ma_uint32 frameCount) {

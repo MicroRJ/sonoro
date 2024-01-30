@@ -21,7 +21,7 @@ typedef struct n_data {
 } n_data;
 
 int getk();
-float popf();
+float d_popfloat();
 int d_popint();
 char *popx();
 void pop();
@@ -81,9 +81,19 @@ void putx(char const *s) {
 	istack += 1;
 }
 void pop() {
+	if (istack <= 0) {
+		__debugbreak();
+		_log("stack underflow");
+		return;
+	}
 	-- istack;
 }
 char *popx() {
+	if (istack <= 0) {
+		__debugbreak();
+		_log("stack underflow");
+		return 0;
+	}
 	if (stack[istack-1].k != VSTRING) {
 		_log("invalid data type");
 	}
@@ -93,8 +103,14 @@ char *popx() {
 	}
 	return s->contents;
 }
-float popf() {
+float d_popfloat() {
+	if (istack <= 0) {
+		__debugbreak();
+		_log("stack underflow");
+		return 0;
+	}
 	if (stack[istack-1].k == VINT) {
+		// _log("unsafe data cast");
 		return (float) stack[-- istack].i;
 	} else {
 		if (stack[istack-1].k != VFLOAT) {
@@ -104,7 +120,13 @@ float popf() {
 	}
 }
 int d_popint() {
+	if (istack <= 0) {
+		__debugbreak();
+		_log("stack underflow");
+		return 0;
+	}
 	if (stack[istack-1].k == VFLOAT) {
+		// _log("unsafe data cast");
 		return (int) stack[-- istack].f;
 	} else {
 		if (stack[istack-1].k != VINT) {

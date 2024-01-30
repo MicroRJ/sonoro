@@ -71,33 +71,41 @@ struct {
 #define CHANNELS            2
 #define SAMPLE_RATE         48000
 
+FILE *samplesfile;
 #include <m_mix.c>
 #include <theme.h>
 #include <d_data.c>
 #include <d_ini.c>
+#include <n_object.h>
 #include <n_node.h>
+#include <n_object.c>
 #include <n_node.c>
 #include <n_base.c>
 #include <n_global.c>
 #include <n_num.c>
+#include <n_toggle.c>
+#include <n_add.c>
 #include <n_min.c>
 #include <n_slider.c>
 #include <n_graph.c>
 #include <n_osc.c>
 #include <n_dac.c>
+#include "n_engine.c"
 #include "audio.c"
-#include "engine.c"
+
 
 void main(int c, char **v)  {
-	lgi_initWindowed(1024,512,"Piano!");
+	lgi_initWindowed(720*2,720,"Sonoro");
 
-	lui_Font *fn = lui_loadFont("lui\\assets\\CascadiaCode\\CascadiaCode.ttf",18);
+	samplesfile = fopen(".smp","wb");
+
+	lui_Font *fn = lui_loadFont("lui\\assets\\CascadiaCode\\static\\CascadiaCode-SemiBold.ttf",18);
 	lui.font = fn;
 	lui.textColor = lgi_BLACK;
 
 
-	n_moduleinit();
-	audiobegin();
+	loadbuiltins();
+
 
 	if(!load()) {
 
@@ -105,21 +113,31 @@ void main(int c, char **v)  {
 		// addnode(numnode(1));
 		// addnode(minnode());
 		// addnode(minnode());
-		addnode(n_newnode(n_getclass("dac")));
+		addnode(newobj(findclass("dac")));
 		addnode(slidernode("Hz",1,440,110));
 
 		addnode(slidernode("Db",0,1,.2f));
 		addnode(oscnode(440));
-		addnode(graphnode("graph",1024));
+		addnode(newobj(findclass("graph")));
 
 		n_addinlet(drawlist[0],0,drawlist[1],0);
 	}
 
-
+	audiobegin();
 
 
 	do {
-		lgi_clearBackground(lgi_RGBA_U(0xfa,0xf9,0xf6,0xff));
+		if (lgi_testKey(' ')) {
+			exec();
+		}
+
+		for (int i=0; i<arrlen(module); i+=1) {
+			if (lgi_testKey('1'+i)) {
+				addnode(newobj(module[i]));
+			}
+		}
+
+		lgi_clearBackground(UI_COLOR_BACKGROUND);
 
 		lgi_Color color = lgi_RGBA(.956f,.956f,.956f,1.f);
 		for (int y=1; y<32; y+=1) {
@@ -128,21 +146,6 @@ void main(int c, char **v)  {
 		for (int x=1; x<32; x+=1) {
 			lgi_drawLine(color,1,x*32.f-.5f,0,x*32.f-.5f,lgi.Window.size_y);
 		}
-
-		if (lgi_testKey(' ')) {
-			exec();
-		}
-
-		for (int i=0; i<arrlen(module); i+=1) {
-			if (lgi_testKey('1'+i)) {
-				addnode(n_newnode(module[i]));
-			}
-		}
-
-		// App.Audio.TestSignal.frequency = ((t_slider *)frq)->val;
-
-
-		lgi_clearBackground(UI_COLOR_BACKGROUND);
 
 #if 1
 		if (selinletnode != lgi_Null) {
@@ -176,12 +179,12 @@ void main(int c, char **v)  {
 		for (int i=0; i<arrlen(drawlist); i+=1) {
 			drawnode(drawlist[i]);
 		}
-
 	} while (lgi_tick());
 
 	audioend();
 
 	save();
+	fclose(samplesfile);
 }
 
 #if 0
