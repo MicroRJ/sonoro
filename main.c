@@ -71,6 +71,7 @@ struct {
 #define CHANNELS            2
 #define SAMPLE_RATE         48000
 
+FILE *samplesfile;
 #include <m_mix.c>
 #include <theme.h>
 #include <d_data.c>
@@ -89,14 +90,12 @@ struct {
 #include <n_graph.c>
 #include <n_osc.c>
 #include <n_dac.c>
-
-FILE *samplesfile;
+#include "n_engine.c"
 #include "audio.c"
-#include "engine.c"
 
 
 void main(int c, char **v)  {
-	lgi_initWindowed(1024,512,"Piano!");
+	lgi_initWindowed(720*2,720,"Sonoro");
 
 	samplesfile = fopen(".smp","wb");
 
@@ -126,17 +125,8 @@ void main(int c, char **v)  {
 
 	audiobegin();
 
+
 	do {
-		lgi_clearBackground(lgi_RGBA_U(0xfa,0xf9,0xf6,0xff));
-
-		lgi_Color color = lgi_RGBA(.956f,.956f,.956f,1.f);
-		for (int y=1; y<32; y+=1) {
-			lgi_drawLine(color,1,0,y*32.f,lgi.Window.size_x,y*32.f);
-		}
-		for (int x=1; x<32; x+=1) {
-			lgi_drawLine(color,1,x*32.f-.5f,0,x*32.f-.5f,lgi.Window.size_y);
-		}
-
 		if (lgi_testKey(' ')) {
 			exec();
 		}
@@ -147,10 +137,15 @@ void main(int c, char **v)  {
 			}
 		}
 
-		// App.Audio.TestSignal.frequency = ((t_slider *)frq)->val;
-
-
 		lgi_clearBackground(UI_COLOR_BACKGROUND);
+
+		lgi_Color color = lgi_RGBA(.956f,.956f,.956f,1.f);
+		for (int y=1; y<32; y+=1) {
+			lgi_drawLine(color,1,0,y*32.f,lgi.Window.size_x,y*32.f);
+		}
+		for (int x=1; x<32; x+=1) {
+			lgi_drawLine(color,1,x*32.f-.5f,0,x*32.f-.5f,lgi.Window.size_y);
+		}
 
 #if 1
 		if (selinletnode != lgi_Null) {
@@ -184,7 +179,6 @@ void main(int c, char **v)  {
 		for (int i=0; i<arrlen(drawlist); i+=1) {
 			drawnode(drawlist[i]);
 		}
-
 	} while (lgi_tick());
 
 	audioend();

@@ -49,8 +49,8 @@ void notify(t_node *n) {
 		return;
 	}
 
-	for (t_edge *e = n->outlets; e != 0; e = e->list) {
-		notify(e->target);
+	for (int i=0; i<arrlen(n->outlets); i+=1) {
+		notify(n->outlets[i].target);
 	}
 }
 
@@ -83,20 +83,19 @@ void n_addoutlet(t_node *outletnode, int outletslot, t_node *inletnode, int inle
 		_log("too many inlets");
 	}
 	/* outlet, connects outletnode to inlet node */
-	t_edge *outlet = malloc(sizeof(t_edge));
-	outlet->list = outletnode->outlets;
-	outlet->target = inletnode;
-	outlet->inletslot = inletslot;
-	outlet->outletslot = outletslot;
-	outletnode->outlets = outlet;
+	t_edge outlet;
+	outlet.target = inletnode;
+	outlet.inletslot = inletslot;
+	outlet.outletslot = outletslot;
+	*arradd(outletnode->outlets,1) = outlet;
 
 	/* inlet, connects inletnode to outlet node */
-	t_edge *inlet = malloc(sizeof(t_edge));
-	inlet->list = inletnode->inlets;
-	inlet->target = outletnode;
-	inlet->inletslot = inletslot;
-	inlet->outletslot = outletslot;
-	inletnode->inlets = inlet;
+	t_edge inlet;
+	inlet.target = outletnode;
+	inlet.inletslot = inletslot;
+	inlet.outletslot = outletslot;
+	*arradd(inletnode->inlets,1) = inlet;
+
 }
 
 

@@ -110,6 +110,7 @@ float d_popfloat() {
 		return 0;
 	}
 	if (stack[istack-1].k == VINT) {
+		// _log("unsafe data cast");
 		return (float) stack[-- istack].i;
 	} else {
 		if (stack[istack-1].k != VFLOAT) {
@@ -125,6 +126,7 @@ int d_popint() {
 		return 0;
 	}
 	if (stack[istack-1].k == VFLOAT) {
+		// _log("unsafe data cast");
 		return (int) stack[-- istack].f;
 	} else {
 		if (stack[istack-1].k != VINT) {

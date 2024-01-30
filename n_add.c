@@ -13,7 +13,6 @@ int addmethod(t_node *n, int k) {
 				float a = d_popfloat();
 				float b = d_popfloat();
 				float v = b + a;
-				// _log("add %f + %f = %f",a,b,v);
 				d_putfloat(v);
 				result = 1;
 			} else {

@@ -23,9 +23,11 @@ int togglemethod(t_node *n, int k) {
 					notify(n);
 				}
 			}
-			if(m->toggled) {
-				lui__drawBox(lui_Box_shrink(nodebox(n),8.f,8.f),UI_COLOR_FOREGROUND);
+			lgi_Color color = UI_COLOR_FOREGROUND;
+			if(!m->toggled) {
+				color = UI_COLOR_FADED;
 			}
+			lui__drawBox(lui_Box_shrink(nodebox(n),8.f,8.f),color);
 		} break;
 	}
 	return result;

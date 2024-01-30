@@ -1,3 +1,4 @@
 
 #define UI_COLOR_BACKGROUND lgi_RGBA_U(0xfa,0xf9,0xf6,0xff)
 #define UI_COLOR_FOREGROUND lgi_BLACK
+#define UI_COLOR_FADED lgi_RGBA(.856f,.856f,.856f,1)

@@ -24,9 +24,12 @@ int dacmethod(t_node *n, int k) {
 			/* todo: also pass in an input mask that tells me which inputs were enabled */
 			result = d_popint();
 			if (result == 2) {
+				float f = d_popfloat();
 				m->enabled = d_popint();
+				d_putfloat(f);
 				result = 1;
 			}
+
 		} break;
 	}
 	return result;

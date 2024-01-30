@@ -37,4 +37,5 @@ void loadbuiltins() {
 	loadclass( "graph", sizeof(t_graph), 1, 1, graphconstructor, graphmethod, 0, 0);
 	loadclass( "dac", sizeof(t_dac), 2, 0, dacconstructor, dacmethod, 0, 0);
 	loadclass( "toggle", sizeof(t_toggle), 1, 1, toggleconstructor, togglemethod, 0, 0);
+	loadclass( "engine", sizeof(t_engine), 4, 1, engineconstructor, enginemethod, 0, 0);
 }

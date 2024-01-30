@@ -8,7 +8,6 @@ typedef struct t_node t_node;
 typedef struct t_edge t_edge;
 
 typedef struct t_edge {
-	t_edge *list;
 	t_node *target;
 	int outletslot,inletslot;
 } t_edge;
@@ -110,5 +109,19 @@ typedef struct t_dac {
 } t_dac;
 t_node *dacconstructor(t_class *);
 int dacmethod(t_node *n, int k);
+
+/* remove from here you big C */
+typedef struct t_engine {
+	t_node node;
+	float  revspermin;
+	double crankshaftrotation;
+	float  crankarmradius;
+	float  pistonwidth;
+	float  connectingrodlength;
+	float  connectingrodthickness;
+	/* the length from the center of the crankshaft to the center of the rod-journal */
+} t_engine;
+t_node *engineconstructor(t_class *);
+int enginemethod(t_node *n, int k);
 
 t_class **module;

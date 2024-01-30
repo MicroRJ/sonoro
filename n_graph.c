@@ -1,8 +1,8 @@
 
 t_node *graphconstructor(t_class *c) {
 	t_graph *g = (t_graph *) baseconstructor(c, lgi_Null, lui_bbox(32.f,32.f,32*8,32*4));
-	g->length = 512;
-	g->buffer = calloc(512,sizeof(float));
+	g->length = 128;
+	g->buffer = calloc(128,sizeof(float));
 	return (t_node *) g;
 }
 

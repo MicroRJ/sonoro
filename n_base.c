@@ -7,9 +7,14 @@ int basemethod(t_node *n, int k) {
 		 we first call the top-level nodes recursively and then us. */
 		case EXEC: {
 			int c = 0;
-			for (t_edge *e = n->inlets; e != 0; e = e->list) {
-				c += execnode(e->target);
+
+			int numinlets = arrlen(n->inlets);
+			for (int i=numinlets-1; i>=0; i-=1) {
+				c += execnode(n->inlets[i].target);
 			}
+			// for (t_edge *e = n->inlets; e != 0; e = e->list) {
+			// 	c += execnode(e->target);
+			// }
 
 			d_putint(c);
 			int r = n->pclass->method(n,CALL);
@@ -66,9 +71,10 @@ int basemethod(t_node *n, int k) {
 				lui__drawBox(getoutletbox(b,i),UI_COLOR_FOREGROUND);
 			}
 
-			for (t_edge *e = n->outlets; e != 0; e = e->list) {
-				t_box o = getoutletbox(b,e->outletslot);
-				t_box i = getinletbox(nodebox(e->target),e->inletslot);
+			for (int j=0; j<arrlen(n->outlets); j+=1) {
+				t_edge e = n->outlets[j];
+				t_box o = getoutletbox(b,e.outletslot);
+				t_box i = getinletbox(nodebox(e.target),e.inletslot);
 				lgi_drawLine(UI_COLOR_FOREGROUND,4.f
 				,	o.x0+(o.x1-o.x0)*.5f,o.y0+(o.y1-o.y0)*.5f
 				,	i.x0+(i.x1-i.x0)*.5f,i.y0+(i.y1-i.y0)*.5f);
@@ -94,8 +100,8 @@ void exportedge(t_node *n, char const *type, t_edge *e, t_exporter *i) {
 }
 
 void exportinlets(t_node *n, t_exporter *e) {
-	for (t_edge *j = n->inlets; j != 0; j = j->list) {
-		exportedge(n,"inlet",j,e);
+	for (int i=0; i<arrlen(n->inlets); i+=1) {
+		exportedge(n,"inlet",&n->inlets[i],e);
 	}
 }
 
