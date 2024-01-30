@@ -3,7 +3,7 @@
 	allows me to adjust their properties and connect them
 	however I want */
 
-typedef lui_Box t_box;
+// typedef lui_Box t_box;
 typedef struct t_node t_node;
 typedef struct t_edge t_edge;
 
@@ -20,12 +20,6 @@ typedef struct t_node {
 	t_edge *inlets;
 	t_box box;
 } t_node;
-
-/*
-typedef struct t_canvas {
-	t_node node;
-} t_canvas;
-*/
 
 void loadbuiltins();
 
@@ -64,6 +58,12 @@ typedef struct t_toggle {
 } t_toggle;
 t_node *toggleconstructor(t_class *);
 int togglemethod(t_node *n, int k);
+
+typedef struct t_div {
+	t_node node;
+} t_div;
+t_node *divconstructor(t_class *);
+int divmethod(t_node *n, int k);
 
 typedef struct t_add {
 	t_node node;

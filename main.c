@@ -33,12 +33,6 @@
 #pragma warning(disable:4702)
 #pragma warning(disable:4716)
 
-lgi_API void drawboxoutline(lui_Box b, float thickness, lgi_Color color) {
-	lgi_drawQuad(color,b.x0-thickness,b.y1          ,b.x1-b.x0+thickness*2,thickness);
-	lgi_drawQuad(color,b.x0-thickness,b.y0-thickness,b.x1-b.x0+thickness*2,thickness);
-	lgi_drawQuad(color,b.x0-thickness,b.y0,thickness,b.y1-b.y0);
-	lgi_drawQuad(color,b.x1          ,b.y0,thickness,b.y1-b.y0);
-}
 
 
 
@@ -73,6 +67,8 @@ struct {
 
 FILE *samplesfile;
 #include <m_mix.c>
+#include <m_box.h>
+#include <view.h>
 #include <theme.h>
 #include <d_data.c>
 #include <d_ini.c>
@@ -83,9 +79,10 @@ FILE *samplesfile;
 #include <n_base.c>
 #include <n_global.c>
 #include <n_num.c>
-#include <n_toggle.c>
+#include <n_mul.c>
 #include <n_add.c>
 #include <n_min.c>
+#include <n_toggle.c>
 #include <n_slider.c>
 #include <n_graph.c>
 #include <n_osc.c>
@@ -125,8 +122,34 @@ void main(int c, char **v)  {
 
 	audiobegin();
 
-
+	float xclick = 0, yclick = 0;
+	float xoffset_ = 0, yoffset_ = 0;
 	do {
+		if (lgi_isButtonDown(2)) {
+			if (!lgi_wasButtonDown(2)) {
+				xclick = lgi.Input.Mice.xcursor;
+				yclick = lgi.Input.Mice.ycursor;
+				xoffset_ = xoffset;
+				yoffset_ = yoffset;
+
+            // {
+            //     HMENU hContextMenu = CreatePopupMenu();
+            //     AppendMenu(hContextMenu, MF_STRING, 1, "Option 1");
+            //     AppendMenu(hContextMenu, MF_STRING, 2, "Option 2");
+
+            //     POINT cursor;
+            //     GetCursorPos(&cursor);
+            //     TrackPopupMenu(hContextMenu, TPM_LEFTALIGN | TPM_TOPALIGN, cursor.x, cursor.y, 0, lgi.Window.win32.handle, NULL);
+            //     // DestroyMenu(hContextMenu);
+            // }
+			}
+			xoffset = xoffset_ - (xclick - lgi.Input.Mice.xcursor);
+			yoffset = yoffset_ - (yclick - lgi.Input.Mice.ycursor);
+		} else {
+			if (lgi_wasButtonDown(2)) {
+			}
+		}
+
 		if (lgi_testKey(' ')) {
 			exec();
 		}
@@ -139,12 +162,12 @@ void main(int c, char **v)  {
 
 		lgi_clearBackground(UI_COLOR_BACKGROUND);
 
-		lgi_Color color = lgi_RGBA(.956f,.956f,.956f,1.f);
+		lgi_Color color = lgi_RGBA(.856f,.856f,.856f,1.f);
 		for (int y=1; y<32; y+=1) {
-			lgi_drawLine(color,1,0,y*32.f,lgi.Window.size_x,y*32.f);
+			drawline(0,y*32.f,lgi.Window.size_x,y*32.f,1,color);
 		}
 		for (int x=1; x<32; x+=1) {
-			lgi_drawLine(color,1,x*32.f-.5f,0,x*32.f-.5f,lgi.Window.size_y);
+			drawline(x*32.f-.5f,0,x*32.f-.5f,lgi.Window.size_y,1,color);
 		}
 
 #if 1
@@ -152,17 +175,17 @@ void main(int c, char **v)  {
 			float xcursor = (float) lgi.Input.Mice.xcursor;
 			float ycursor = (float) lgi.Input.Mice.ycursor;
 			t_box in = getinletbox(nodebox(selinletnode),selinletslot);
-			lgi_drawLine(lgi_RED,2.f,in.x0,in.y0,xcursor,ycursor);
+			drawline(in.x,in.y,xcursor,ycursor,2,lgi_RED);
 
 			for (int i=0; i<arrlen(drawlist); i+=1) {
 				t_node *t = drawlist[i];
 				if (t == selinletnode) continue;
-				lui_Box b = t->box;
+				t_box b = t->box;
 
 				for (int j=0; j<t->pclass->numoutlets; j+=1) {
-					lui_Box h = lui_bbox(b.x0+4+j*16+j*8,b.y0,16,8);
+					t_box h = bbox(b.x+4+j*16+j*8,b.y,16,8);
 					// lui__drawBox(h,lgi_GREEN);
-					if (lui_testinbox(h,xcursor,ycursor)) {
+					if (inbox(h,xcursor,ycursor)) {
 
 						/* We're drawing an inlet to an outlet */
 						n_addoutlet(t,j,selinletnode,selinletslot);

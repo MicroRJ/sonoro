@@ -1,7 +1,7 @@
 
 
 t_node *engineconstructor(t_class *c) {
-	t_engine *m = (t_engine *) baseconstructor(c, lgi_Null, lui_bbox(32.f,32.f,32*8,32*8));
+	t_engine *m = (t_engine *) baseconstructor(c, lgi_Null, bbox(32.f,32.f,32*8,32*8));
 	m->revspermin = 15.f;
 	m->crankarmradius = 64.f;
 	m->pistonwidth = 128.f;
@@ -43,8 +43,8 @@ int enginemethod(t_node *n, int k) {
 			float pistonCylinderWidth = pistonWidth;
 
 			t_box b = nodebox(n);
-			float xorigin = b.x0 + (b.x1 - b.x0) * .5;
-			float yorigin = b.y0 + crankcaseRadius;
+			float xorigin = b.x + b.zx * .5;
+			float yorigin = b.y + crankcaseRadius;
 			vec2 center = vec2_xy(xorigin,yorigin);
 
 			float xoscilation = cosf(m->crankshaftrotation) * crankarmRadius;

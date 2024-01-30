@@ -30,8 +30,9 @@ t_class *loadclass(char const *name, int typesize, int numinlets, int numoutlets
 
 void loadbuiltins() {
 	loadclass( "num", sizeof(t_num), 1, 1, numconstructor, nummethod, 0, 0);
-	loadclass( "min", sizeof(t_min), 2, 1, minconstructor, minmethod, 0, 0);
 	loadclass( "add", sizeof(t_add), 2, 1, addconstructor, addmethod, 0, 0);
+	loadclass( "div", sizeof(t_div), 2, 1, divconstructor, divmethod, 0, 0);
+	loadclass( "min", sizeof(t_min), 2, 1, minconstructor, minmethod, 0, 0);
 	loadclass( "osc", sizeof(t_osc), 1, 1, oscconstructor, oscmethod, 0, 0);
 	loadclass( "slider", sizeof(t_slider), 1, 1, sliderconstructor, slidermethod, sliderexportmethod, sliderimportmethod );
 	loadclass( "graph", sizeof(t_graph), 1, 1, graphconstructor, graphmethod, 0, 0);

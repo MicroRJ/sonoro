@@ -4,13 +4,15 @@ t_node *selinletnode;
 int selinletslot;
 int dragnodexclick;
 int dragnodeyclick;
-int lastnodeid;
 
 /* remove from here */
 t_node **drawlist;
 
+/* the last node id, ensure that when importing nodes, the id is restored, or made
+ bigger than the largest id imported */
+int lastnodeid;
 
-t_node *baseconstructor(t_class *pclass, char const *label, lui_Box box) {
+t_node *baseconstructor(t_class *pclass, char const *label, t_box box) {
 	t_node *n = calloc(1,pclass->typesize);
 	n->id = lastnodeid ++;
 	n->pclass = pclass;
@@ -59,10 +61,10 @@ t_box nodebox(t_node *n) {
 	t_box b = n->box;
 	/* replace with flag - todo */
 	if (seldragnode == n) {
-		int xdelta = 32 * ((lgi.Input.Mice.xcursor - dragnodexclick) / 32);
-		int ydelta = 32 * ((lgi.Input.Mice.ycursor - dragnodeyclick) / 32);
-		b.x0 += xdelta; b.x1 += xdelta;
-		b.y0 += ydelta; b.y1 += ydelta;
+		int xdelta = 32 * ((getxcursor() - dragnodexclick) / 32);
+		int ydelta = 32 * ((getycursor() - dragnodeyclick) / 32);
+		b.x += xdelta;
+		b.y += ydelta;
 	}
 	return b;
 }
@@ -99,18 +101,16 @@ void n_addoutlet(t_node *outletnode, int outletslot, t_node *inletnode, int inle
 }
 
 
-lgi_Bool clicked(lui_Box box) {
-	float xcursor = (float) lgi.Input.Mice.xcursor;
-	float ycursor = (float) lgi.Input.Mice.ycursor;
-	return lgi_isButtonPressed(0) && lui_testinbox(box,xcursor,ycursor);
-}
 
 t_box getinletbox(t_box b, int i) {
-	return lui_bbox(b.x0+i*16+i*8,b.y1+4,16,8);
+	int h = 8;
+	return bbox(b.x+h+i*32,b.y+b.zy+4,h*2,8);
 }
 
 t_box getoutletbox(t_box b, int i) {
-	return lui_bbox(b.x0+i*16+i*8,b.y0-8-4,16,8);
+	int h = 8;
+
+	return bbox(b.x+h+i*32,b.y-8-4,h*2,8);
 }
 
 

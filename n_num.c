@@ -1,6 +1,6 @@
 
 t_node *numconstructor(t_class *c) {
-	t_num *m = (t_num *) baseconstructor(c, lgi_Null, lui_bbox(32.f,32.f,32*4,32));
+	t_num *m = (t_num *) baseconstructor(c, lgi_Null, bbox(32.f,32.f,32*4,32));
 	m->num = 0.f;
 	return (t_node *) m;
 }
@@ -25,7 +25,7 @@ int nummethod(t_node *n, int k) {
 			result = 1;
 		} break;
 		case DRAW: {
-			lui__drawText(nodebox(n),_fmt("%.2f",m->num));
+			drawtext(nodebox(n),_fmt("%.2f",m->num));
 		} break;
 	}
 	return result;

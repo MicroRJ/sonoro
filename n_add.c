@@ -1,6 +1,10 @@
 
+//
+// Addition:
+//
+
 t_node *addconstructor(t_class *c) {
-	return baseconstructor(c, "add", lui_bbox(32.f,32.f,32*4,32));
+	return baseconstructor(c, "add", bbox(32.f,32.f,32*4,32));
 }
 
 int addmethod(t_node *n, int k) {
@@ -8,8 +12,8 @@ int addmethod(t_node *n, int k) {
 	switch (k) {
 		case CALL: {
 			/* check that we have enough arguments */
-			int c = d_popint();
-			if (c == 2) {
+			result = d_popint();
+			if (result == 2) {
 				float a = d_popfloat();
 				float b = d_popfloat();
 				float v = b + a;
