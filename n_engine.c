@@ -22,14 +22,16 @@ int enginemethod(t_node *n, int k) {
 	switch (k) {
 		case CALL: {
 			result = d_popint();
+			if (result == 1) {
+				m->revspermin = d_popfloat();
+				result -= 1;
+			}
 		} break;
 		case DRAW: {
 			lgi_Color colorBackground = lgi_RGBA_U(0xfa,0xf9,0xf6,0xff);
 			lgi_Color colorMiddleground = lgi_RGBA_U(0x33,0x33,0x33,0xff);
 			lgi_Color colorForeground = lgi_BLACK;
 
-			float revolutionsPerMinute = 15.f;
-			double crankshaftRotation = 0.;
 			float pistonWidth = 64.f;
 			float connectingRodLength = 128.f;
 			float connectingRodThickness = 16.f;
@@ -45,22 +47,15 @@ int enginemethod(t_node *n, int k) {
 			float yorigin = b.y0 + crankcaseRadius;
 			vec2 center = vec2_xy(xorigin,yorigin);
 
-			// wdg_slider(lui_bbox(8.f,8.f+32*0,256,32),0,500,&revolutionsPerMinute);
-			// wdg_slider(lui_bbox(8.f,8.f+32*1,256,32),64,256,&connectingRodLength);
-			// wdg_slider(lui_bbox(8.f,8.f+32*2,256,32),4,256,&crankarmRadius);
-			// wdg_slider(lui_bbox(8.f,8.f+32*3,256,32),4,256,&pistonWidth);
-
-
-
-			float xoscilation = cosf(crankshaftRotation) * crankarmRadius;
-			float yoscilation = sinf(crankshaftRotation) * crankarmRadius;
+			float xoscilation = cosf(m->crankshaftrotation) * crankarmRadius;
+			float yoscilation = sinf(m->crankshaftrotation) * crankarmRadius;
 			float xcrankpin = xorigin + xoscilation;
 			float ycrankpin = yorigin + yoscilation;
 			float xpistonpin = xorigin;
 			float ypistonpin = yorigin + yoscilation + connectingRodLength;
 
-			float revolutionsPerSecond = revolutionsPerMinute / 60.f;
-			crankshaftRotation += lgi_TAU * revolutionsPerSecond * lgi.Time.deltaSeconds;
+			float revolutionsPerSecond = m->revspermin / 60.f;
+			m->crankshaftrotation += lgi_TAU * revolutionsPerSecond * lgi.Time.deltaSeconds;
 
 		// lgi_drawBox(vec2_xy(xorigin,yorigin),vec2_xy(32.f,8.f),colorMiddleground,0.f,0.f);
 

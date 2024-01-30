@@ -59,8 +59,8 @@ t_box nodebox(t_node *n) {
 	t_box b = n->box;
 	/* replace with flag - todo */
 	if (seldragnode == n) {
-		int xdelta = lgi.Input.Mice.xcursor - dragnodexclick;
-		int ydelta = lgi.Input.Mice.ycursor - dragnodeyclick;
+		int xdelta = 32 * ((lgi.Input.Mice.xcursor - dragnodexclick) / 32);
+		int ydelta = 32 * ((lgi.Input.Mice.ycursor - dragnodeyclick) / 32);
 		b.x0 += xdelta; b.x1 += xdelta;
 		b.y0 += ydelta; b.y1 += ydelta;
 	}
