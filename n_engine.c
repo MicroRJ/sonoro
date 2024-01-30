@@ -26,6 +26,10 @@ int enginemethod(t_node *n, int k) {
 				m->revspermin = d_popfloat();
 				result -= 1;
 			}
+
+			float revolutionsPerSecond = m->revspermin / 60.f;
+			m->crankshaftrotation += lgi_TAU * revolutionsPerSecond * lgi.Time.deltaSeconds;
+
 		} break;
 		case DRAW: {
 			lgi_Color colorBackground = lgi_RGBA_U(0xfa,0xf9,0xf6,0xff);
@@ -53,9 +57,6 @@ int enginemethod(t_node *n, int k) {
 			float ycrankpin = yorigin + yoscilation;
 			float xpistonpin = xorigin;
 			float ypistonpin = yorigin + yoscilation + connectingRodLength;
-
-			float revolutionsPerSecond = m->revspermin / 60.f;
-			m->crankshaftrotation += lgi_TAU * revolutionsPerSecond * lgi.Time.deltaSeconds;
 
 		// lgi_drawBox(vec2_xy(xorigin,yorigin),vec2_xy(32.f,8.f),colorMiddleground,0.f,0.f);
 

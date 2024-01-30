@@ -78,13 +78,18 @@ FILE *samplesfile;
 #include <n_node.c>
 #include <n_base.c>
 #include <n_global.c>
+
 #include <n_num.c>
 #include <n_mul.c>
 #include <n_add.c>
 #include <n_min.c>
+
+#include <n_tick.c>
+
 #include <n_toggle.c>
 #include <n_slider.c>
 #include <n_graph.c>
+
 #include <n_osc.c>
 #include <n_dac.c>
 #include "n_engine.c"
@@ -99,6 +104,7 @@ void main(int c, char **v)  {
 	lui_Font *fn = lui_loadFont("lui\\assets\\CascadiaCode\\static\\CascadiaCode-SemiBold.ttf",18);
 	lui.font = fn;
 	lui.textColor = lgi_BLACK;
+
 
 
 	loadbuiltins();
@@ -160,15 +166,21 @@ void main(int c, char **v)  {
 			}
 		}
 
+		t_class *tickclass = findclass("tick");
+		for (int i=0; i<arrlen(drawlist); i+=1) {
+			t_node *n = drawlist[i];
+			if (n->pclass == tickclass) {
+				int results = execnode(n);
+				if (results != 0) {
+					d_popfloat();
+				}
+			}
+		}
+
+
 		lgi_clearBackground(UI_COLOR_BACKGROUND);
 
-		lgi_Color color = lgi_RGBA(.856f,.856f,.856f,1.f);
-		for (int y=1; y<32; y+=1) {
-			drawline(0,y*32.f,lgi.Window.size_x,y*32.f,1,color);
-		}
-		for (int x=1; x<32; x+=1) {
-			drawline(x*32.f-.5f,0,x*32.f-.5f,lgi.Window.size_y,1,color);
-		}
+		drawgrid();
 
 #if 1
 		if (selinletnode != lgi_Null) {

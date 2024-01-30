@@ -2,8 +2,6 @@
 /* A node system that allows me to create nodes using GUI,
 	allows me to adjust their properties and connect them
 	however I want */
-
-// typedef lui_Box t_box;
 typedef struct t_node t_node;
 typedef struct t_edge t_edge;
 
@@ -102,6 +100,14 @@ typedef struct t_graph {
 } t_graph;
 t_node *graphconstructor(t_class *);
 int graphmethod(t_node *n, int k);
+
+typedef struct t_tick {
+	t_node node;
+	int enabled;
+} t_tick;
+t_node *tickconstructor(t_class *);
+int tickmethod(t_node *n, int k);
+
 
 typedef struct t_dac {
 	t_node node;
