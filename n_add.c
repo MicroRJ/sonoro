@@ -19,8 +19,6 @@ int addmethod(t_node *n, int k) {
 				float v = b + a;
 				d_putfloat(v);
 				result = 1;
-			} else {
-				_log("invalid number of arguments");
 			}
 		} break;
 	}
