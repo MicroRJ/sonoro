@@ -33,12 +33,48 @@ t_node *importnode(t_class *c, t_importer *i) {
 	return c->import_ != 0 ? c->import_(c,i) : importbasenode(c,i);
 }
 
-void drawnode(t_node *n) {
-	n->pclass->method(n,DRAW);
+/* invoke */
+int invoke(t_node *n, int k, int x, int y) {
+	return n->pclass->method(n,k,x,y);
 }
 
-int execnode(t_node *n) {
-	return n->pclass->method(n,EXEC);
+int drawnode(t_node *n) {
+	return invoke(n,DRAW,0,0);
+}
+
+int callnode(t_node *n, int x, int y) {
+	return invoke(n,CALL,x,y);
+}
+//
+// tick(num(),timer()) != tick(num(timer()))
+//
+
+/* drives the execution downwards */
+int feedoverride(t_node *n, int x, int y) {
+	int numresults = callnode(n,x,y);
+	int numoutlets = arrlen(n->outlets);
+	for (int i=numoutlets-1; i>=0; i-=1) {
+		numresults = feedoverride(n->outlets[i].target,numresults,0);
+	}
+	return numresults;
+}
+int execoverride(t_node *n, int x, int y) {
+	int numinlets = arrlen(n->inlets);
+	int numvalues = 0;
+	for (int i=numinlets-1; i>=0; i-=1) {
+		t_node *t = n->inlets[i].target;
+		numvalues += execoverride(t,x,y);
+		int numoutlets = arrlen(t->outlets);
+		for (int j=numoutlets-1;j>=1;j-=1) {
+			numvalues = feedoverride(t->outlets[j].target,numvalues,0);
+		}
+	}
+	return callnode(n,numvalues,0);
+}
+
+int execnode(t_node *n, int x, int y) {
+	return execoverride(n,x,y);
+	// return invoke(n,EXEC,x,y);
 }
 
 void notify(t_node *n) {
@@ -46,12 +82,12 @@ void notify(t_node *n) {
 		/* otherwise this is a trigger node and we should not mess with it because
 		it could be on a different thread! */
 		if (n->pclass->numoutlets != 0) {
-			execnode(n);
+			execnode(n,0,0);
 		}
 		return;
 	}
 
-	for (int i=0; i<arrlen(n->outlets); i+=1) {
+	for (int i=arrlen(n->outlets)-1; i>=0; i+=1) {
 		notify(n->outlets[i].target);
 	}
 }

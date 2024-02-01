@@ -1,4 +1,50 @@
 
+void loadbuiltins() {
+	newclass( "num", sizeof(t_num), 1, 1, numconstructor, nummethod, 0, 0);
+	newclass( "tick", sizeof(t_tick), 2, 0, tickconstructor, tickmethod, 0, 0);
+	newclass( "timer", sizeof(t_timer), 1, 1, timerconstructor, timermethod, 0, 0);
+	newclass( "graph", sizeof(t_graph), 1, 1, graphconstructor, graphmethod, 0, 0);
+	newclass( "toggle", sizeof(t_toggle), 1, 1, toggleconstructor, togglemethod, 0, 0);
+	newclass( "detector", sizeof(t_detector), 1, 3, detectorconstructor, detectormethod, 0, 0);
+	newclass( "add", sizeof(t_add), 2, 1, addconstructor, addmethod, 0, 0);
+	newclass( "div", sizeof(t_div), 2, 1, divconstructor, divmethod, 0, 0);
+	newclass( "min", sizeof(t_min), 2, 1, minconstructor, minmethod, 0, 0);
+	newclass( "osc", sizeof(t_osc), 1, 1, oscconstructor, oscmethod, 0, 0);
+	newclass( "slider", sizeof(t_slider), 1, 1, sliderconstructor, slidermethod, sliderexportmethod, sliderimportmethod );
+	newclass( "dac", sizeof(t_dac), 2, 0, dacconstructor, dacmethod, 0, 0);
+	newclass( "engine", sizeof(t_engine), 4, 1, engineconstructor, enginemethod, 0, 0);
+}
+
+
+void editor() {
+	if (selinletnode != lgi_Null) {
+		float xcursor = getxcursor();
+		float ycursor = getycursor();
+		t_box in = getinletbox(nodebox(selinletnode),selinletslot);
+		drawline(in.x,in.y,xcursor,ycursor,2,lgi_RED);
+
+		for (int i=0; i<arrlen(drawlist); i+=1) {
+			t_node *t = drawlist[i];
+			if (t == selinletnode) continue;
+			t_box b = t->box;
+
+			for (int j=0; j<t->pclass->numoutlets; j+=1) {
+				t_box h = bbox(b.x+4+j*16+j*8,b.y,16,8);
+					// lui__drawBox(h,lgi_GREEN);
+				if (inbox(h,xcursor,ycursor)) {
+
+						/* We're drawing an inlet to an outlet */
+					n_addoutlet(t,j,selinletnode,selinletslot);
+
+					lgi_logInfo("attached!");
+					selinletnode = lgi_Null;
+					selinletslot = 0;
+					break;
+				}
+			}
+		}
+	}
+}
 
 /* remove this from here */
 void addnode(t_node *n) {
@@ -62,14 +108,4 @@ void save() {
 		exportinlets(drawlist[i],&e);
 	}
 	fclose(file);
-}
-
-void exec() {
-	for (int i=0; i<arrlen(drawlist); i+=1) {
-		t_node *n = drawlist[i];
-		/* find end of execution branch */
-		if (n->inlets != 0 && n->outlets == 0) {
-			execnode(n);
-		}
-	}
 }

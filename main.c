@@ -72,27 +72,29 @@ FILE *samplesfile;
 #include <theme.h>
 #include <d_data.c>
 #include <d_ini.c>
-#include <n_object.h>
+
 #include <n_node.h>
 #include <n_object.c>
 #include <n_node.c>
 #include <n_base.c>
-#include <n_global.c>
 
-#include <n_num.c>
-#include <n_mul.c>
-#include <n_add.c>
-#include <n_min.c>
+#include <n_math.c>
 
+#include <n_time.c>
 #include <n_tick.c>
 
 #include <n_toggle.c>
 #include <n_slider.c>
+#include <n_detector.c>
+
 #include <n_graph.c>
 
 #include <n_osc.c>
 #include <n_dac.c>
-#include "n_engine.c"
+#include <n_engine.c>
+
+#include <n_global.c>
+
 #include "audio.c"
 
 
@@ -110,21 +112,7 @@ void main(int c, char **v)  {
 	loadbuiltins();
 
 
-	if(!load()) {
-
-		// addnode(numnode(0));
-		// addnode(numnode(1));
-		// addnode(minnode());
-		// addnode(minnode());
-		addnode(newobj(findclass("dac")));
-		addnode(slidernode("Hz",1,440,110));
-
-		addnode(slidernode("Db",0,1,.2f));
-		addnode(oscnode(440));
-		addnode(newobj(findclass("graph")));
-
-		n_addinlet(drawlist[0],0,drawlist[1],0);
-	}
+	load();
 
 	audiobegin();
 
@@ -156,10 +144,6 @@ void main(int c, char **v)  {
 			}
 		}
 
-		if (lgi_testKey(' ')) {
-			exec();
-		}
-
 		for (int i=0; i<arrlen(module); i+=1) {
 			if (lgi_testKey('1'+i)) {
 				addnode(newobj(module[i]));
@@ -170,47 +154,20 @@ void main(int c, char **v)  {
 		for (int i=0; i<arrlen(drawlist); i+=1) {
 			t_node *n = drawlist[i];
 			if (n->pclass == tickclass) {
-				int results = execnode(n);
-				if (results != 0) {
-					d_popfloat();
+				if (lgi_testKey(' ')) {
+					int results = execnode(n,0,0);
+					while (results --) pop();
 				}
 			}
 		}
+		// Sleep(1000);
 
 
 		lgi_clearBackground(UI_COLOR_BACKGROUND);
 
 		drawgrid();
+		editor();
 
-#if 1
-		if (selinletnode != lgi_Null) {
-			float xcursor = (float) lgi.Input.Mice.xcursor;
-			float ycursor = (float) lgi.Input.Mice.ycursor;
-			t_box in = getinletbox(nodebox(selinletnode),selinletslot);
-			drawline(in.x,in.y,xcursor,ycursor,2,lgi_RED);
-
-			for (int i=0; i<arrlen(drawlist); i+=1) {
-				t_node *t = drawlist[i];
-				if (t == selinletnode) continue;
-				t_box b = t->box;
-
-				for (int j=0; j<t->pclass->numoutlets; j+=1) {
-					t_box h = bbox(b.x+4+j*16+j*8,b.y,16,8);
-					// lui__drawBox(h,lgi_GREEN);
-					if (inbox(h,xcursor,ycursor)) {
-
-						/* We're drawing an inlet to an outlet */
-						n_addoutlet(t,j,selinletnode,selinletslot);
-
-						lgi_logInfo("attached!");
-						selinletnode = lgi_Null;
-						selinletslot = 0;
-						break;
-					}
-				}
-			}
-		}
-#endif
 		for (int i=0; i<arrlen(drawlist); i+=1) {
 			drawnode(drawlist[i]);
 		}

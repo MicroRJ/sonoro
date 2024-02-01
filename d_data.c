@@ -1,6 +1,7 @@
 #define MAX_NAME 32
 
 enum {
+	VERROR,
 	VFLOAT,
 	VINT,
 	VSTRING,
@@ -11,20 +12,26 @@ typedef struct t_string {
 	char contents[1];
 } t_string;
 
-typedef struct n_data {
+typedef struct t_value {
 	char k;
 	union {
 		float f;
 		int i;
 		t_string *s;
 	};
-} n_data;
+} t_value;
 
 int getk();
+
+int d_popmask();
+
 float d_popfloat();
 int d_popint();
 char *popx();
-void pop();
+t_value pop();
+void d_put();
+
+void d_putmask(int x);
 
 void d_putfloat(float x);
 void d_putint(int x);
@@ -34,7 +41,7 @@ t_string *newstr(char const *x);
 
 
 //
-__declspec(thread) n_data stack[0x100];
+__declspec(thread) t_value stack[0x100];
 __declspec(thread) int istack;
 
 t_string *newstr(char const *contents) {
@@ -70,6 +77,14 @@ void d_putint(int i) {
 	stack[istack].i = i;
 	istack += 1;
 }
+void d_put(t_value v) {
+	if (istack >= _countof(stack)) {
+		__debugbreak();
+		_log("stack overflow");
+		return;
+	}
+	stack[istack ++] = v;
+}
 void putx(char const *s) {
 	if (istack >= _countof(stack)) {
 		__debugbreak();
@@ -80,14 +95,16 @@ void putx(char const *s) {
 	stack[istack].s = newstr(s);
 	istack += 1;
 }
-void pop() {
+t_value pop() {
 	if (istack <= 0) {
 		__debugbreak();
 		_log("stack underflow");
-		return;
+		return (t_value){0};
 	}
-	-- istack;
+	return stack[-- istack];
 }
+
+
 char *popx() {
 	if (istack <= 0) {
 		__debugbreak();

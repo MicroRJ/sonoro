@@ -12,16 +12,18 @@ t_node *slidernode(char const *label, float min, float max, float val) {
 	return (t_node *) m;
 }
 
-int slidermethod(t_node *n, int k) {
-	int result = basemethod(n,k);
+int slidermethod(t_node *n, int k, int x, int y) {
+	int result = basemethod(n,k,x,y);
 
 	t_slider *s = (t_slider *) n;
 	switch (k) {
 		case CALL: {
-			int c = d_popint();
-			while (c --) pop();
+			if (result >= 1) {
+				s->val = d_popfloat();
+				result -= 1;
+			}
 			d_putfloat(s->val);
-			result = 1;
+			result += 1;
 		} break;
 		case DRAW: {
 			t_box b = nodebox(n);

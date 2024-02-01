@@ -12,23 +12,63 @@ void drawinletedge(t_node *source, t_edge inlet) {
 	drawline(i.x+i.zx*.5f, s.y+s.zy,o.x+o.zx*.5f,t.y, 4, UI_COLOR_FOREGROUND);
 }
 
-int basemethod(t_node *n, int k) {
+
+int basemethod(t_node *n, int k, int x, int y) {
 	switch (k) {
+		/* On 'CALL' we're expected to return the number of results
+		we've outputted, by default we assume this node acts as a bypass
+		and so we return the number of arguments. */
+		case CALL: {
+			_log("call %s-%i, %i $%i",n->pclass->name,n->id,x,istack);
+			return x;
+		} break;
+
+#if 0
+		case FEED: {
+		} break;
 		/* the exec method is used to trigger execution of the whole branch,
 		 we first call the top-level nodes recursively and then us. */
 		case EXEC: {
 			int c = 0;
-
 			int numinlets = arrlen(n->inlets);
+			/* execute the inlets right to left, this will order the stack properly
+			for function arguments, if the output of the right-most inlet is pushed
+			first, then later when the user pops a value it will get the left-most
+			one. */
 			for (int i=numinlets-1; i>=0; i-=1) {
-				c += execnode(n->inlets[i].target);
+				t_node *t = n->inlets[i].target;
+				/*
+					Continue calling exec node before, which will drive the executing
+				flow in an downwards manner, nodes at the very top get executed first. */
+				int r = execnode(t,x,y);
+				c += r;
+				continue;
+				///*
+				//	Check how many outlets this node have, the node should have outputted
+				//a number of values fit for all its outlets.
+				// 	To keep the execution order the same (right to left) the stack order is
+			 	//the opposite as before, in this case the value for the left most outlet is
+			 	//pushed first, therefore the value for the right most outlet is last.. */
+				//int numoutlets = arrlen(t->outlets);
+				///* The first outlet is the one were the execution flow (EXEC) goes through,
+				//so we iterate over all the other right most outlets in the proper execution
+				//order.*/
+				//for (int j=numoutlets-1; j>=1; j-=1) {
+				//	t_node *o = t->outlets[j].target;
+				//	/* Now because we're going backwards, 'call' gets issued first before feed,
+				//	which feeds down the execution flow */
+				//	r = o->pclass->method(o,CALL);
+				//
+				//	o->pclass->method(o,FEED);
+				//}
 			}
+			_log("exec %s",n->pclass->name);
+
 			// for (t_edge *e = n->inlets; e != 0; e = e->list) {
 			// 	c += execnode(e->target);
 			// }
 
-			d_putint(c);
-			int r = n->pclass->method(n,CALL);
+			int r = invoke(n,CALL,c,0);
 			/* check whether this node yielded something when there are no
 			outlets, in which case, cleanup the stack */
 			if (r != 0 && n->outlets == NULL && n->pclass->numoutlets != 0) {
@@ -39,6 +79,7 @@ int basemethod(t_node *n, int k) {
 			}
 			return r;
 		} break;
+	#endif
 		case DRAW: {
 			t_box b = nodebox(n);
 

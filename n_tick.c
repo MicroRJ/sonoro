@@ -8,20 +8,21 @@ t_node *tickconstructor(t_class *c) {
 /* todo: figure out how to make it so that we can still detect feedback messages,
  I think we should have a separate channel for that, and with an inlet mask telling
  us which inlet the things came from, we can update certain properties without re-triggering branch execution */
-int tickmethod(t_node *n, int k) {
+int tickmethod(t_node *n, int k, int x, int y) {
 	/* todo: the basemethod when it receives a "CALL" message it should return the
 	 number of arguments passed in */
-	int result = basemethod(n,k);
+	int result = basemethod(n,k,x,y);
 	t_tick *m = (t_tick*) n;
 	switch (k) {
 		case CALL: {
-			/* todo: also pass in an input mask that tells me which inputs were enabled */
-			result = d_popint();
-			if (result == 2) {
-				float f = d_popfloat();
-				m->enabled = d_popint();
-				d_putfloat(f);
-				result = 1;
+			if (result >= 2) {
+				t_value pass = pop();
+				int enabled = d_popint();
+				d_put(pass);
+
+				result += 1;
+
+				m->enabled = enabled;
 			}
 
 		} break;
