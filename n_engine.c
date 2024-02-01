@@ -15,14 +15,13 @@ t_node *enginenode(float engine) {
 	return engineconstructor(findclass("engine"));
 }
 
-int enginemethod(t_node *n, int k) {
-	int result = basemethod(n,k);
+int enginemethod(t_node *n, int k, int x, int y) {
+	int result = basemethod(n,k,x,y);
 
 	t_engine *m = (t_engine*) n;
 	switch (k) {
 		case CALL: {
-			result = d_popint();
-			if (result == 1) {
+			if (result >= 1) {
 				m->revspermin = d_popfloat();
 				result -= 1;
 			}
@@ -36,49 +35,46 @@ int enginemethod(t_node *n, int k) {
 			lgi_Color colorMiddleground = lgi_RGBA_U(0x33,0x33,0x33,0xff);
 			lgi_Color colorForeground = lgi_BLACK;
 
-			float pistonWidth = 64.f;
-			float connectingRodLength = 128.f;
-			float connectingRodThickness = 16.f;
+			float pistonwidth = 64.f;
+			float rodlength = 128.f;
+			float rodthickness = 16.f;
 	/* the length from the center of the crankshaft to the center of the rod-journal */
-			float crankarmRadius = 16;
-			float crankcaseRadius = crankarmRadius * 3.f;
-			float engineBlockHeight = crankarmRadius * 2 + 8.f;
-			float engineBlockThickness = 8.f;
-			float pistonCylinderWidth = pistonWidth;
+			float crankarmlength = 16;
+			float crankcaseRadius = crankarmlength * 3.f;
+			float cylinderheight = crankarmlength * 2 + 8.f;
+			float cylinderwallthickness = 8.f;
+			float cylinderwidth = pistonwidth;
 
 			t_box b = nodebox(n);
 			float xorigin = b.x + b.zx * .5;
 			float yorigin = b.y + crankcaseRadius;
-			vec2 center = vec2_xy(xorigin,yorigin);
 
-			float xoscilation = cosf(m->crankshaftrotation) * crankarmRadius;
-			float yoscilation = sinf(m->crankshaftrotation) * crankarmRadius;
+			float xoscilation = cosf(m->crankshaftrotation) * crankarmlength;
+			float yoscilation = sinf(m->crankshaftrotation) * crankarmlength;
 			float xcrankpin = xorigin + xoscilation;
 			float ycrankpin = yorigin + yoscilation;
 			float xpistonpin = xorigin;
-			float ypistonpin = yorigin + yoscilation + connectingRodLength;
+			float ypistonpin = yorigin + yoscilation + rodlength;
 
-		// lgi_drawBox(vec2_xy(xorigin,yorigin),vec2_xy(32.f,8.f),colorMiddleground,0.f,0.f);
+			/* draw piston cylinder walls */
+			t_box cylinderwallbox = { 0, yorigin+rodlength-crankarmlength, cylinderwallthickness, cylinderheight };
+			cylinderwallbox.x = xorigin+cylinderwidth*.5f;
+			drawbox(cylinderwallbox,colorMiddleground);
+			cylinderwallbox.x = xorigin-cylinderwidth*.5f-cylinderwallthickness;
+			drawbox(cylinderwallbox,colorMiddleground);
 
-		/* draw piston cylinder */
-			lgi_drawBox(vec2_xy(xorigin-pistonCylinderWidth*.5f-engineBlockThickness,yorigin+connectingRodLength- crankarmRadius),vec2_xy(engineBlockThickness,engineBlockHeight),colorMiddleground,0.f,0.f);
-			lgi_drawBox(vec2_xy(xorigin+pistonCylinderWidth*.5f,yorigin+connectingRodLength- crankarmRadius),vec2_xy(engineBlockThickness,engineBlockHeight),colorMiddleground,0.f,0.f);
+			/* draw the piston */
+			t_box pistonbox = {xorigin-pistonwidth*.5f,ypistonpin,pistonwidth,pistonwidth/8.f};
+			drawbox(pistonbox,colorMiddleground);
 
-
-
-		// lgi_drawBox(vec2_xy(xorigin-pistonCylinderWidth*.5f,connectingRodLength+100.f),vec2_xy(pistonCylinderWidth,engineBlockHeight),colorMiddleground,0.f,0.f);
-
-		/* draw the piston */
-			lgi_drawBox(vec2_xy(xorigin-pistonWidth*.5f,ypistonpin),vec2_xy(pistonWidth,pistonWidth/8.f),colorMiddleground,0.f,0.f);
-		/* draw the crankshaft*/
-			lgi_drawCircleSDF(center,vec2_xy(crankarmRadius,crankarmRadius),colorMiddleground,0.f,2.f);
-		/* draw the connecting rod */
-			lgi_drawLine(colorForeground,connectingRodThickness
-			, xcrankpin,ycrankpin, xorigin, ypistonpin);
-		/* draw the pistonpin last */
-			lgi_drawCircleSDF(vec2_xy(xpistonpin,ypistonpin),vec2_xy(4.f,4.f),colorBackground,0.f,2.f);
-		/* draw the crankpin last */
-			lgi_drawCircleSDF(vec2_xy(xcrankpin,ycrankpin),vec2_xy(4.f,4.f),colorBackground,0.f,2.f);
+			/* draw the crankarm as a circle */
+			drawcircle(xorigin,yorigin,crankarmlength,colorMiddleground);
+			/* draw the connecting rod */
+			drawline(xcrankpin,ycrankpin,xorigin,ypistonpin,rodthickness,colorForeground);
+			/* draw the pistonpin last */
+			drawcircle(xpistonpin,ypistonpin,4.f,colorBackground);
+			/* draw the crankpin last */
+			drawcircle(xcrankpin,ycrankpin,4.f,colorBackground);
 		} break;
 	}
 	return result;

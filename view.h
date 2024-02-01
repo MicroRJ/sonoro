@@ -47,13 +47,13 @@ void drawgrid() {
 	lgi_Color color = lgi_RGBA(.856f,.856f,.856f,1.f);
 
 	int ngridy = lgi.Window.size_y / 32;
-	for (int i=1; i<ngridy+1; i+=1) {
+	for (int i=0; i<ngridy+1; i+=1) {
 		int x = - xoffset;
 		int y = - ((int)(yoffset / 32) * 32) + i * 32;
 		drawline(x,y,lgi.Window.size_x+x,y,1,color);
 	}
 	int ngridx = lgi.Window.size_x / 32;
-	for (int i=1; i<ngridx+1; i+=1) {
+	for (int i=0; i<ngridx+1; i+=1) {
 		int y = - yoffset;
 		int x = - ((int)(xoffset / 32) * 32) + i * 32;
 		drawline(x,y,x,lgi.Window.size_y+y,1,color);

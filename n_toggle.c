@@ -3,18 +3,17 @@ t_node *toggleconstructor(t_class *c) {
 	return baseconstructor(c, lgi_Null, bbox(32.f,32.f,32,32));
 }
 
-int togglemethod(t_node *n, int k) {
-	int result = basemethod(n,k);
+int togglemethod(t_node *n, int k, int x, int y) {
+	int result = basemethod(n,k,x,y);
 
 	t_toggle *m = (t_toggle*) n;
 	switch (k) {
 		case CALL: {
-			int c = d_popint();
-			if (c == 1) {
+			if (result >= 1) {
 				m->toggled = d_popint();
 			}
 			d_putint(m->toggled);
-			result = 1;
+			result += 1;
 		} break;
 		case DRAW: {
 			if (!result) {

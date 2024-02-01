@@ -6,28 +6,29 @@ t_node *graphconstructor(t_class *c) {
 	return (t_node *) g;
 }
 
-int graphmethod(t_node *n, int k) {
-	int result = basemethod(n,k);
+int graphmethod(t_node *n, int k, int x, int y) {
+	int result = basemethod(n,k,x,y);
 	t_graph *m = (t_graph*) n;
 	switch (k) {
 		case CALL: {
-			result = d_popint();
-			if (result != 0) {
+			if (result >= 1) {
 				if (m->cursor >= m->length) {
 					m->cursor = 0;
 				}
-				float f = d_popfloat();
-				m->buffer[m->cursor ++] = f;
-				d_putfloat(f);
+				/* bypass */
+				float sample = d_popfloat();
+				m->buffer[m->cursor ++] = sample;
+
+				d_putfloat(sample);
 			}
 		} break;
 		case DRAW: {
 			t_box b = nodebox(n);
 			float p = b.zx / m->length;
 			for (int i=0; i<m->length; i+=1) {
-				float y = b.y + lui_remix(m->buffer[i],-2.f,+2.f,0,b.zy);
-				float x = b.x + i*p;
-				drawcircle(x,y,p,UI_COLOR_FOREGROUND);
+				float py = b.y + lui_remix(m->buffer[i],-2.f,+2.f,0,b.zy);
+				float px = b.x + i*p;
+				drawcircle(px,py,p,UI_COLOR_FOREGROUND);
 			}
 		} break;
 	}
