@@ -13,19 +13,19 @@ t_node **drawlist;
 int lastnodeid;
 
 /* execution order testing and visualization */
-int test_fallexecorder(t_node *n, int x, int y) {
+int test_fallexecorder(t_node *n) {
 	if (n->exectested) {
 		for (int i=n->pclass->numoutlets-1; i>=0; i-=1) {
 			t_edge outlet = n->outlets[i];
 			if (outlet.target == 0) continue;
 			if (outlet.type == RED_WIRE) continue;
-			if(test_fallexecorder(outlet.target,n->numoutputs,0)) {
+			if(test_fallexecorder(outlet.target)) {
 				return 1;
 			}
 		}
 		return 0;
 	}
-	n->numoutputs = callnode(n,x,y);
+	callnode(n,n->numinlets,0);
 	n->exectested = 1;
 	return 1;
 }
@@ -46,13 +46,13 @@ int test_execorder(t_node *n) {
 			t_edge outlet = inlet.target->outlets[j];
 			if (outlet.target == 0) continue;
 			if (outlet.type == RED_WIRE) continue;
-			if (test_fallexecorder(outlet.target,inlet.target->numoutputs,0)) {
+			if (test_fallexecorder(outlet.target)) {
 				return 1;
 			}
 		}
 	}
 	n->exectested = 1;
-	n->numoutputs = callnode(n,0,0);
+	callnode(n,n->numinlets,0);
 	return 1;
 }
 
@@ -106,62 +106,35 @@ int callnode(t_node *n, int x, int y) {
 	return result;
 }
 
-
-/* drives the execution downwards */
-int feednode(t_node *n, int x, int y) {
-	int numresults = callnode(n,x,y);
-	_log("feed '%s': %i => %i",n->pclass->name,x,numresults);
-
+int eval_fallorder(t_node *n, int x, int y) {
+	callnode(n,x,y);
+	n->exectested = 1;
 	for (int i=n->pclass->numoutlets-1; i>=0; i-=1) {
 		t_edge outlet = n->outlets[i];
-		/* we can only go down red blue and black wires */
-		if (outlet.type == RED_WIRE) continue;
-		/* ensure this outlet is enabled */
 		if (outlet.target == 0) continue;
-
-		numresults = feednode(outlet.target,numresults,0);
+		if (outlet.type == RED_WIRE) continue;
+		eval_fallorder(outlet.target,n->numinlets,0);
 	}
-	return numresults;
 }
 
-/* drives the execution flow upwards */
-int execnode(t_node *n, int x, int y) {
-	lgi_ASSERT(x == 0); /* Since exec node is a depth
-	first traversal, the leaf nodes are to be terminal nodes
-	and thus take no inputs, or at least don't require inputs.. */
-	int numresults = 0;
+int evalnode(t_node *n) {
 	for (int i=n->pclass->numinlets-1; i>=0; i-=1) {
 		t_edge inlet = n->inlets[i];
-		/* is this inlet even enabled */
 		if (inlet.target == 0) continue;
-		/* blue wires disallow the flow upwards */
 		if (inlet.type == BLUE_WIRE) continue;
-		lgi_ASSERT(inlet.inletslot == i);
+		evalnode(inlet.target);
 
-		numresults += execnode(inlet.target,x,y);
-
-		/* execute hanging branches, these are the outlets of
-		the inlet which are not connected to us, and would not
-		get executed otherwise, note that after we start executing
-		hanging branches we only traverse the graph downwards. */
 		for (int j=inlet.target->pclass->numoutlets-1;j>=0;j-=1) {
-			t_edge outlet = inlet.target->outlets[j];
-			/* ensure this outlet is enabled */
-			if (outlet.target == 0) continue;
-			/* the branch from where we came from is
-			not a 'hanging-branch' and if we did execute then
-			the graph would become cyclical */
 			if (j == inlet.outletslot) continue;
-			/* we can only go down red blue and black wires */
+			t_edge outlet = inlet.target->outlets[j];
+			if (outlet.target == 0) continue;
 			if (outlet.type == RED_WIRE) continue;
-
-			lgi_ASSERT(outlet.outletslot == j);
-
-			numresults = feednode(outlet.target,numresults,0);
+			eval_fallorder(outlet.target,1,0);
 		}
 	}
-	_log("exec: (%s_%i)() => %i",n->pclass->name,n->id,numresults);
-	return callnode(n,numresults,0);
+	n->exectested = 1;
+	callnode(n,n->numinlets,0);
+	return 1;
 }
 
 void notify(t_node *n) {
@@ -169,7 +142,7 @@ void notify(t_node *n) {
 		/* otherwise this is a trigger node and we should not mess with it because
 		it could be on a different thread! */
 		if (n->pclass->numoutlets != 0) {
-			execnode(n,0,0);
+			evalnode(n);
 		}
 		return;
 	}

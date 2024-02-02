@@ -10,7 +10,7 @@ void writeTestSignal(float *output, int frameCount) {
 		if (n->pclass == dacclass) {
 			t_dac *d = (t_dac *) n;
 			for (int iFrame = 0; iFrame < frameCount; iFrame += 1) {
-				int results = execnode(n,0,0);
+				int results = evalnode(n);
 				if (results != 0) {
 					float sample = (float) d_popfloat() * App.Audio.TestSignal.volume;
 					if (d->enabled) {

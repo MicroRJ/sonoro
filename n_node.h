@@ -133,7 +133,7 @@ typedef struct t_node {
 	t_box box;
 
 	int exectested;
-	int numoutputs;
+	// int numoutputs;
 
 	int numinlets;
 	int numoutlets;
@@ -145,7 +145,7 @@ typedef struct t_node {
 
 int invoke(t_node *n, int k, int x, int y);
 int drawnode(t_node *n);
-int execnode(t_node *n, int x, int y);
+int evalnode(t_node *n);
 int callnode(t_node *n, int x, int y);
 
 /* node exporter/importer, exports only the base properties */

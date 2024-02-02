@@ -30,6 +30,7 @@ int nummethod(t_node *n, int k, int x, int y) {
 	t_num *m = (t_num*) n;
 	switch (k) {
 		case CALL: {
+			lgi_ASSERT(result <= 1);
 			if (result >= 1) {
 				m->num = d_popfloat();
 				result -= 1;

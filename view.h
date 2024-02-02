@@ -59,3 +59,25 @@ void drawgrid() {
 		drawline(x,y,x,lgi.Window.size_y+y,1,color);
 	}
 }
+
+void dopanning() {
+	lgi_Global float xclick = 0, yclick = 0;
+	lgi_Global float xoffset_ = 0, yoffset_ = 0;
+
+	yoffset -= lgi.Input.Mice.yscroll * 16.;
+	xoffset -= lgi.Input.Mice.xscroll * 16.;
+	if (lgi_isButtonDown(2)) {
+		if (!lgi_wasButtonDown(2)) {
+			xclick = lgi.Input.Mice.xcursor;
+			yclick = lgi.Input.Mice.ycursor;
+			xoffset_ = xoffset;
+			yoffset_ = yoffset;
+
+		}
+		xoffset = xoffset_ - (xclick - lgi.Input.Mice.xcursor);
+		yoffset = yoffset_ - (yclick - lgi.Input.Mice.ycursor);
+	} else {
+		if (lgi_wasButtonDown(2)) {
+		}
+	}
+}

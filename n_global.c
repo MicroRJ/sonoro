@@ -87,7 +87,7 @@ int loadconfig(char const *filename) {
 	if (filename == 0) {
 		filename = ".ini";
 	}
-	FILE *file = fopen(filename,"rb");
+	FILE *file = fopen(filename,"a+");
 	if (file == NULL) {
 		_log("failed to read file");
 		return 0;

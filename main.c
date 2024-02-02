@@ -71,6 +71,7 @@ FILE *samplesfile;
 
 #include "audio.c"
 
+#include <src\fdlg.c>
 
 char *keyToClass[][2] = {
 	{"N","num"},
@@ -119,33 +120,31 @@ void main(int c, char **v)  {
 
 	audiobegin();
 
-	float xclick = 0, yclick = 0;
-	float xoffset_ = 0, yoffset_ = 0;
+
 	do {
-		yoffset -= lgi.Input.Mice.yscroll * 4.;
-		xoffset -= lgi.Input.Mice.xscroll * 4.;
-		if (lgi_isButtonDown(2)) {
-			if (!lgi_wasButtonDown(2)) {
-				xclick = lgi.Input.Mice.xcursor;
-				yclick = lgi.Input.Mice.ycursor;
-				xoffset_ = xoffset;
-				yoffset_ = yoffset;
-
+		dopanning();
+		if (lgi_testCtrlKey() && lgi_testKey('N')) {
+			char filename[MAX_PATH];
+			if (fdlg(filename,MAX_PATH)) {
 			}
-			xoffset = xoffset_ - (xclick - lgi.Input.Mice.xcursor);
-			yoffset = yoffset_ - (yclick - lgi.Input.Mice.ycursor);
-		} else {
-			if (lgi_wasButtonDown(2)) {
+		} else
+		if (lgi_testCtrlKey() && lgi_testKey('O')) {
+			char filename[MAX_PATH];
+			if (fdlg(filename,MAX_PATH)) {
+				arrdel(drawlist);
+				loadconfig(filename);
 			}
-		}
-
+		} else
+		if (lgi_testCtrlKey() && lgi_testKey('S')) {
+			saveconfig();
+			_log("config saved");
+		} else
 		if (lgi_testKey('W')) {
 			App.Editor.wireType += 1;
 			if (App.Editor.wireType >= 4) {
 				App.Editor.wireType = 1;
 			}
-		}
-
+		} else
 		if (!lgi_testCtrlKey()) {
 			for (int i=0; i<_countof(keyToClass); i+=1) {
 				if (lgi_testKey(keyToClass[i][0][0])) {
@@ -156,18 +155,16 @@ void main(int c, char **v)  {
 			}
 		}
 
-		if (lgi_testCtrlKey() && lgi_testKey('S')) {
-			saveconfig();
-			_log("config saved");
-		}
 
 		t_class *tickclass = findclass("tick");
 		for (int i=0; i<arrlen(drawlist); i+=1) {
 			t_node *n = drawlist[i];
 			if (n->pclass == tickclass) {
-				if (lgi_testKey(' ')) {
+				if (lgi_testKey('X')) {
 					test_execorder(n);
-					// int results = execnode(n,0,0);
+				} else
+				if (lgi_testKey(' ')) {
+					int results = evalnode(n);
 					// while (results --) pop();
 				}
 			}
@@ -209,7 +206,7 @@ void main(int c, char **v)  {
 			if (k == VINT) {
 				s = _fmt("%s = %i",s,stack[i].i);
 			} else {
-				__debugbreak();
+				s = _fmt("%s = error",s);
 			}
 			lui__drawText(lui_boxcut(&list,lui_top,32),s);
 		}

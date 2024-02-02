@@ -13,7 +13,7 @@ int splittermethod(t_node *n, int k, int x, int y) {
 	switch (k) {
 		case CALL: {
 			if (result >= 1) {
-				for (int i=0; i<n->pclass->numoutlets-1; i+=1) {
+				for (int i=0; i<n->pclass->numoutlets; i+=1) {
 					t_edge outlet = n->outlets[i];
 					if (outlet.target == 0) continue;
 					d_dup(1);
@@ -42,11 +42,6 @@ int detectormethod(t_node *n, int k, int x, int y) {
 	int result = basemethod(n,k,x,y);
 	switch (k) {
 		case CALL: {
-			if (result != 1) {
-				_war("invalid number of arguments");
-				return result;
-			}
-			t_value restore = pop();
 			/* Generate an integer for each outlet we have active,
 			the first outlet is the one that drives the execution
 			flow upwards, so we don't generate one for that one. */
@@ -55,7 +50,6 @@ int detectormethod(t_node *n, int k, int x, int y) {
 				d_putint(1);
 				result += 1;
 			}
-			rt_pushvalue(restore);
 		} break;
 		case DRAW: {
 		} break;
