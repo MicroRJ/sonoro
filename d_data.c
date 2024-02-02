@@ -2,10 +2,15 @@
 
 enum {
 	VERROR,
+	VSTRING,
 	VFLOAT,
 	VINT,
-	VSTRING,
 };
+
+char const *typetostring(int k) {
+	char const *table[] = { "error", "obj", "num", "int" };
+	return table[k];
+}
 
 typedef struct t_string {
 	int length;
@@ -29,13 +34,16 @@ float d_popfloat();
 int d_popint();
 char *popx();
 t_value pop();
-void d_put();
+void rt_pushvalue(t_value);
+t_value *d_putk(int k);
 
 void d_putmask(int x);
 
 void d_putfloat(float x);
 void d_putint(int x);
 void putx(char const *x);
+
+void d_dup();
 
 t_string *newstr(char const *x);
 
@@ -57,43 +65,43 @@ t_string *newstr(char const *contents) {
 int getk() {
 	return stack[istack-1].k;
 }
-void d_putfloat(float f) {
+
+void rt_pushvalue(t_value v) {
 	if (istack >= _countof(stack)) {
-		__debugbreak();
-		_log("stack overflow");
-		return;
+		istack = _countof(stack) - 1;
+		_err("stack overflow");
 	}
-	stack[istack].k = VFLOAT;
-	stack[istack].f = f;
-	istack += 1;
-}
-void d_putint(int i) {
-	if (istack >= _countof(stack)) {
-		__debugbreak();
-		_log("stack overflow");
-		return;
-	}
-	stack[istack].k = VINT;
-	stack[istack].i = i;
-	istack += 1;
-}
-void d_put(t_value v) {
-	if (istack >= _countof(stack)) {
-		__debugbreak();
-		_log("stack overflow");
-		return;
-	}
+	_log("put $%i, %i",istack,v.k);
 	stack[istack ++] = v;
 }
-void putx(char const *s) {
+
+t_value *d_putk(int k) {
 	if (istack >= _countof(stack)) {
-		__debugbreak();
-		_log("stack overflow");
-		return;
+		istack = _countof(stack) - 1;
+		_err("stack overflow");
 	}
-	stack[istack].k = VSTRING;
-	stack[istack].s = newstr(s);
-	istack += 1;
+	_log("put: $%i, %i",istack,k);
+	t_value *v = stack + istack ++;
+	v->k = k;
+	return v;
+}
+
+void d_dup() {
+	if (istack >= _countof(stack)) {
+		istack = _countof(stack) - 1;
+		_err("stack overflow");
+	}
+	stack[istack] = stack[istack ++ - 1];
+}
+
+void d_putfloat(float f) {
+	d_putk(VFLOAT)->f = f;
+}
+void d_putint(int i) {
+	d_putk(VINT)->i = i;
+}
+void putx(char const *s) {
+	d_putk(VSTRING)->s = newstr(s);
 }
 t_value pop() {
 	if (istack <= 0) {
@@ -101,54 +109,24 @@ t_value pop() {
 		_log("stack underflow");
 		return (t_value){0};
 	}
+	_log("pop: $%i",istack-1);
 	return stack[-- istack];
 }
-
-
 char *popx() {
-	if (istack <= 0) {
-		__debugbreak();
-		_log("stack underflow");
-		return 0;
-	}
-	if (stack[istack-1].k != VSTRING) {
-		_log("invalid data type");
-	}
-	t_string *s = stack[-- istack].s;
-	if (s == 0) {
-		return 0;
-	}
+	lgi_ASSERT(getk() == VSTRING);
+	t_string *s = pop().s;
+	if (s == 0) return 0;
 	return s->contents;
 }
 float d_popfloat() {
-	if (istack <= 0) {
-		__debugbreak();
-		_log("stack underflow");
-		return 0;
-	}
-	if (stack[istack-1].k == VINT) {
-		// _log("unsafe data cast");
-		return (float) stack[-- istack].i;
-	} else {
-		if (stack[istack-1].k != VFLOAT) {
-			_log("invalid data type");
-		}
-		return stack[-- istack].f;
-	}
+	if (getk() == VFLOAT) return pop().f;
+	if (getk() == VINT) return (float) pop().i;
+	_war("invalid data type");
+	return 0;
 }
 int d_popint() {
-	if (istack <= 0) {
-		__debugbreak();
-		_log("stack underflow");
-		return 0;
-	}
-	if (stack[istack-1].k == VFLOAT) {
-		// _log("unsafe data cast");
-		return (int) stack[-- istack].f;
-	} else {
-		if (stack[istack-1].k != VINT) {
-			_log("invalid data type");
-		}
-		return stack[-- istack].i;
-	}
+	if (getk() == VINT) return pop().i;
+	if (getk() == VFLOAT) return (int) pop().f;
+	_war("invalid data type");
+	return 0;
 }

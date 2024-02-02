@@ -1,29 +1,26 @@
 
 t_node *sliderconstructor(t_class *c) {
-	return baseconstructor(c, lgi_Null, bbox(32.f,32.f,32*6,32));
-}
-
-t_node *slidernode(char const *label, float min, float max, float val) {
-	t_slider *m = (t_slider *) sliderconstructor(findclass("slider"));
-	m->min = min;
-	m->max = max;
-	m->val = val;
-
-	return (t_node *) m;
+	t_slider *slider = (t_slider *) basenew(c, lgi_Null, bbox(32.f,32.f,32*6,32));
+	slider->max = 880;
+	slider->min = 0;
+	slider->val = 440;
+	return (t_node *) slider;
 }
 
 int slidermethod(t_node *n, int k, int x, int y) {
 	int result = basemethod(n,k,x,y);
-
 	t_slider *s = (t_slider *) n;
 	switch (k) {
 		case CALL: {
 			if (result >= 1) {
 				s->val = d_popfloat();
+				s->val = lui_clip(s->val,s->min,s->max);
 				result -= 1;
 			}
-			d_putfloat(s->val);
-			result += 1;
+			if (n->numoutlets != 0) {
+				d_putfloat(s->val);
+				result += 1;
+			}
 		} break;
 		case DRAW: {
 			t_box b = nodebox(n);
@@ -64,15 +61,15 @@ int slidermethod(t_node *n, int k, int x, int y) {
 	return result;
 }
 
-void sliderexportmethod(t_node *n, t_exporter *e) {
+void sliderexportmethod(t_node *n, t_unloader *e) {
 	t_slider *slider = (t_slider *) n;
-	exportbasenode(n,e);
+	unloadbasenode(n,e);
 	d_putfloat(slider->min); ini_writefield(e,"min");
 	d_putfloat(slider->max); ini_writefield(e,"max");
 	d_putfloat(slider->val); ini_writefield(e,"val");
 }
-t_node *sliderimportmethod(t_class *c, t_importer *i) {
-	t_slider *slider = (t_slider *) importbasenode(c,i);
+t_node *sliderimportmethod(t_class *c, t_loader *i) {
+	t_slider *slider = (t_slider *) loadbasenode(c,i);
 	char b[MAX_NAME];
 	while (ini_nextfield(i,b)) {
 		if (!strcmp(b,"min")) slider->min = d_popfloat(); else

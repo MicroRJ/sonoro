@@ -1,6 +1,5 @@
 
 
-int sampleindex = 0;
 void writeTestSignal(float *output, int frameCount) {
 
 	// double frequency = App.Audio.TestSignal.frequency;
@@ -15,8 +14,6 @@ void writeTestSignal(float *output, int frameCount) {
 				if (results != 0) {
 					float sample = (float) d_popfloat() * App.Audio.TestSignal.volume;
 					if (d->enabled) {
-						fprintf(samplesfile,"%i, %f\n",sampleindex, sample);
-						sampleindex += 1;
 						for (int iChannel = 0; iChannel < CHANNELS; iChannel += 1) {
 							output[iFrame*CHANNELS + iChannel] = sample;
 						}

@@ -1,0 +1,118 @@
+
+
+
+Inner workings of Sonoro.
+
+Sonoro is a visual programming language with a few
+extra features made specifically for the visual
+aspect of programming itself.
+
+
+Abstract:
+
+	There exists one container object called a canvas,
+	which contains every single visible node.
+
+
+
+The execution model:
+
+Just to be clear, Sonoro does NOT use an event based system,
+instead it compiles the nodes you see on screen to machine
+code. (My own backend that is).
+
+If you've ever made a compiler before, then you should be
+familar with the concept of an AST. Well, the stuff
+you see on screen is a type of very high-level AST.
+Which is then translated to another type of lower
+level AST which is typically closely related to the
+inner workings of the machine. Once this is done,
+bytecode is generated, bytecode is literally just
+very simple commands for a machine.
+
+
+In other words, take this script:
+
+add( slider(), slider() )
+[2]  [1]       [0]
+
+Even if you've never programmed before,
+is pretty obvious what the order of execution should
+be.
+
+Sonoro operates on the same principle, the only
+difference is that each function is actually a node,
+which comes a whole bunch of overhead,
+
+I've made my own programming language wich comes
+with Sonoro, so I'll use as an example:
+
+
+
+
+If you're familiar with how compilers generate code,
+then you should know that typically, the code executes
+in the order of least dependencies from a singular starting
+point which is usually a statement of sorts, or a type
+of expression which drives the program.
+
+In this case, 'add' is a function and the '()' is postfix
+operator, operators drive the program, they tell the
+machine what to do, therefore the junction 'add()'
+is parsed as a function call, and function calls
+translate directly to instructions.
+
+Now we now that 'add' is the starting point,
+and in textual programming languages is rather simple
+to tell because the parser sees 'add' first, before
+actually getting to its arguments, so it is implicitly
+obvoius for the parser, all it has to do is generate
+the AST [*1] and send it off to the code generator,
+the code generator does a depth first search on the AST,
+building each leaf.
+
+Now visually we can still do the same, but we have to
+figure out which nodes are these so called statements,
+note that I refer to these as "execution branches".
+
+To do that we have a container, this container called
+a canvas holds and allocates every single node.
+
+
+
+
+
+
+
+#
+# Execution Branch
+#
+# num( add( num( min(slider(), slider()) ), slider() ) )
+#
+#
+
+
+loop :: class {
+	range: int
+	method(range := 0) -> bypass
+}
+
+osc :: class {
+	hz: float
+	time: float
+	method (hz := .0) -> float
+}
+num :: class {
+	value: float
+	method () -> float
+}
+
+mul :: class {
+	method (a: float, b: float) -> float
+}
+sub :: class {
+	method (a: float, b: float) -> float
+}
+add :: class {
+	method (a: float, b: float) -> float
+}

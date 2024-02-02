@@ -1,19 +1,19 @@
 
 
-typedef struct t_exporter {
+typedef struct t_unloader {
 	FILE *f;
-} t_exporter;
+} t_unloader;
 
-typedef struct t_importer {
+typedef struct t_loader {
 	char *p;
-} t_importer;
+} t_loader;
 
 
-void ini_writeheader(t_exporter *e, char const *name) {
+void ini_writeheader(t_unloader *e, char const *name) {
 	fprintf(e->f,"[%s]\n",name);
 }
 
-void ini_writefield(t_exporter *e, char *name) {
+void ini_writefield(t_unloader *e, char const *name) {
 	switch (getk()) {
 		case VSTRING: {
 			char *s = popx();
@@ -53,7 +53,7 @@ int isblankortab(char p) {
 
 /* read a name into a buffer, return -1 if invalid otherwise
  returns the length of the name. */
-int nextname(t_importer *i, char *b) {
+int nextname(t_loader *i, char *b) {
 	if (!isletter(*i->p) && *i->p != '_') {
 		return -1;
 	}
@@ -65,7 +65,7 @@ int nextname(t_importer *i, char *b) {
 	return w - b;
 }
 
-int ini_nextfield(t_importer *i, char *b) {
+int ini_nextfield(t_loader *i, char *b) {
 	while (isblankorline(*i->p)) ++ i->p;
 
 	if (*i->p != '.') {
@@ -116,7 +116,7 @@ int ini_nextfield(t_importer *i, char *b) {
 	return 1;
 }
 
-int ini_nextheader(t_importer *i, char *b) {
+int ini_nextheader(t_loader *i, char *b) {
 	if (i->p == 0 || *i->p == 0) {
 		return 0;
 	}

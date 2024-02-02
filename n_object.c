@@ -13,7 +13,7 @@ t_class *findclass(char const *name) {
 	return 0;
 }
 
-t_class *newclass(char const *name, int typesize, int numinlets, int numoutlets, t_constructor *constructor, t_method *method, t_exportmethod *mexport, t_importmethod *mimport) {
+t_class *newclass(char const *name, int typesize, int numinlets, int numoutlets, t_new *constructor, t_method *method, t_unload *unload, t_load *load) {
 	t_class *c = calloc(1,sizeof(t_class));
 	strcpy(c->name,name);
 	c->typesize = typesize;
@@ -21,8 +21,8 @@ t_class *newclass(char const *name, int typesize, int numinlets, int numoutlets,
 	c->numoutlets = numoutlets;
 	c->constructor = constructor;
 	c->method = method;
-	c->export_ = mexport;
-	c->import_ = mimport;
+	c->unload = unload;
+	c->load = load;
 
 	*arradd(module,1) = c;
 	return c;

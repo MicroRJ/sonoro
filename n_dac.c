@@ -2,7 +2,7 @@
 /* the whole point of this object is to get found by the
  audio device and ran on a steady interval, it acts as a bypass. */
 t_node *dacconstructor(t_class *c) {
-	return baseconstructor(c, "DAC", bbox(32.f,32.f,32*4,32));
+	return basenew(c, "DAC", bbox(32.f,32.f,32*4,32));
 }
 
 /* todo: figure out how to make it so that we can still detect feedback messages,
@@ -20,6 +20,7 @@ int dacmethod(t_node *n, int k, int x, int y) {
 				float sample = d_popfloat();
 				m->enabled = d_popint();
 				result -= 2;
+
 				d_putfloat(sample);
 				result += 1;
 			}

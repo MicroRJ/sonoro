@@ -16,6 +16,8 @@
 #include "miniaudio.h"
 
 #define _log lgi_logInfo
+#define _err lgi_logError
+#define _war lgi_logError
 
 // char *nstr(char const *s) {
 // 	int l = (int) strlen(s);
@@ -32,34 +34,6 @@
 #pragma warning(disable:4267)
 #pragma warning(disable:4702)
 #pragma warning(disable:4716)
-
-
-
-
-struct {
-	struct {
-		ma_context context;
-		ma_result lastError;
-		struct {
-			ma_device handle;
-			struct {
-				ma_device_info * array;
-				ma_uint32        count;
-			} Playback;
-			struct {
-				ma_device_info * array;
-				ma_uint32        count;
-			} Capture;
-		} Device;
-
-		struct {
-			float frequency;
-			// TODO: Can We Track This In Frames?
-			double time;
-			float volume;
-		} TestSignal;
-	} Audio;
-} lgi_Global App;
 
 #define FORMAT              ma_format_f32
 #define CHANNELS            2
@@ -82,10 +56,10 @@ FILE *samplesfile;
 
 #include <n_time.c>
 #include <n_tick.c>
+#include <n_flow.c>
 
 #include <n_toggle.c>
 #include <n_slider.c>
-#include <n_detector.c>
 
 #include <n_graph.c>
 
@@ -98,27 +72,58 @@ FILE *samplesfile;
 #include "audio.c"
 
 
+char *keyToClass[][2] = {
+	{"N","num"},
+	{"A","dac"},
+	{"G","graph"},
+	{"T","timer"},
+	{"D","detector"},
+	{"O","osc"},
+	{"K","tick"},
+	{"0","add"},
+	{"1","div"},
+	{"2","min"},
+	{"F","toggle"},
+	{"S","slider"},
+	{"Y","splitter"},
+};
+
 void main(int c, char **v)  {
 	lgi_initWindowed(720*2,720,"Sonoro");
-
-	samplesfile = fopen(".smp","wb");
 
 	lui_Font *fn = lui_loadFont("lui\\assets\\CascadiaCode\\static\\CascadiaCode-SemiBold.ttf",18);
 	lui.font = fn;
 	lui.textColor = lgi_BLACK;
 
-
-
+	App.Editor.wireType = 1;
 	loadbuiltins();
 
+	for (int i=0; i<_countof(keyToClass); i+=1) {
+		_log("key mapping: %c => %s",keyToClass[i][0][0],keyToClass[i][1]);
+	}
 
-	load();
+	int loadedconfig = lgi_False;
+
+	for (int i=1; i<c; i+=1) {
+		_log("loading config");
+		loadedconfig = loadconfig(v[i]);
+		if (!loadconfig) {
+			_err("'%s': failed to load config file",v[i]);
+		}
+		break;
+	}
+
+	if (!loadedconfig) {
+		loadedconfig = loadconfig(0);
+	}
 
 	audiobegin();
 
 	float xclick = 0, yclick = 0;
 	float xoffset_ = 0, yoffset_ = 0;
 	do {
+		yoffset -= lgi.Input.Mice.yscroll * 4.;
+		xoffset -= lgi.Input.Mice.xscroll * 4.;
 		if (lgi_isButtonDown(2)) {
 			if (!lgi_wasButtonDown(2)) {
 				xclick = lgi.Input.Mice.xcursor;
@@ -126,16 +131,6 @@ void main(int c, char **v)  {
 				xoffset_ = xoffset;
 				yoffset_ = yoffset;
 
-            // {
-            //     HMENU hContextMenu = CreatePopupMenu();
-            //     AppendMenu(hContextMenu, MF_STRING, 1, "Option 1");
-            //     AppendMenu(hContextMenu, MF_STRING, 2, "Option 2");
-
-            //     POINT cursor;
-            //     GetCursorPos(&cursor);
-            //     TrackPopupMenu(hContextMenu, TPM_LEFTALIGN | TPM_TOPALIGN, cursor.x, cursor.y, 0, lgi.Window.win32.handle, NULL);
-            //     // DestroyMenu(hContextMenu);
-            // }
 			}
 			xoffset = xoffset_ - (xclick - lgi.Input.Mice.xcursor);
 			yoffset = yoffset_ - (yclick - lgi.Input.Mice.ycursor);
@@ -144,10 +139,26 @@ void main(int c, char **v)  {
 			}
 		}
 
-		for (int i=0; i<arrlen(module); i+=1) {
-			if (lgi_testKey('1'+i)) {
-				addnode(newobj(module[i]));
+		if (lgi_testKey('W')) {
+			App.Editor.wireType += 1;
+			if (App.Editor.wireType >= 4) {
+				App.Editor.wireType = 1;
 			}
+		}
+
+		if (!lgi_testCtrlKey()) {
+			for (int i=0; i<_countof(keyToClass); i+=1) {
+				if (lgi_testKey(keyToClass[i][0][0])) {
+					_log("adding object %s",keyToClass[i][1]);
+					addnode(newobj(findclass(keyToClass[i][1])));
+					break;
+				}
+			}
+		}
+
+		if (lgi_testCtrlKey() && lgi_testKey('S')) {
+			saveconfig();
+			_log("config saved");
 		}
 
 		t_class *tickclass = findclass("tick");
@@ -155,8 +166,9 @@ void main(int c, char **v)  {
 			t_node *n = drawlist[i];
 			if (n->pclass == tickclass) {
 				if (lgi_testKey(' ')) {
-					int results = execnode(n,0,0);
-					while (results --) pop();
+					test_execorder(n);
+					// int results = execnode(n,0,0);
+					// while (results --) pop();
 				}
 			}
 		}
@@ -171,12 +183,40 @@ void main(int c, char **v)  {
 		for (int i=0; i<arrlen(drawlist); i+=1) {
 			drawnode(drawlist[i]);
 		}
+
+		lui__drawBox(lui_bbox(lgi.Input.Mice.xcursor,lgi.Input.Mice.ycursor,4,4),wirecolor(App.Editor.wireType));
+
+
+		//
+		lui_Box menubox = lui_bbox(0,lgi.Window.size_y-32,lgi.Window.size_x, 32);
+		lui__drawBox(menubox,lgi_BLACK);
+
+		lgi_drawOutline(32,menubox.y0+8,256,16,2,lgi_WHITE);
+		float p = ((float)istack)/_countof(stack) * (256-8);
+		lgi_drawQuad(lgi_WHITE,32+4,menubox.y0+8+4,p,16-8);
+
+
+		lui_Box list = lui_bbox(0,0,lgi.Window.size_x,lgi.Window.size_y-32);
+		for (int i = 0; i < istack; i += 1) {
+			int k = stack[i].k;
+			char const *s = _fmt("%i: %s",i,typetostring(k));
+			if (k == VSTRING) {
+				s = _fmt("%s = %s",s,stack[i].s->contents);
+			} else
+			if (k == VFLOAT) {
+				s = _fmt("%s = %f",s,stack[i].f);
+			} else
+			if (k == VINT) {
+				s = _fmt("%s = %i",s,stack[i].i);
+			} else {
+				__debugbreak();
+			}
+			lui__drawText(lui_boxcut(&list,lui_top,32),s);
+		}
+
 	} while (lgi_tick());
 
 	audioend();
-
-	save();
-	fclose(samplesfile);
 }
 
 #if 0

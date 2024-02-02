@@ -1,7 +1,7 @@
 
 
 t_node *engineconstructor(t_class *c) {
-	t_engine *m = (t_engine *) baseconstructor(c, lgi_Null, bbox(32.f,32.f,32*8,32*8));
+	t_engine *m = (t_engine *) basenew(c, lgi_Null, bbox(32.f,32.f,32*8,32*8));
 	m->revspermin = 15.f;
 	m->crankarmradius = 64.f;
 	m->pistonwidth = 128.f;

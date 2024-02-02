@@ -1,6 +1,6 @@
 
 t_node *graphconstructor(t_class *c) {
-	t_graph *g = (t_graph *) baseconstructor(c, lgi_Null, bbox(32.f,32.f,32*8,32*4));
+	t_graph *g = (t_graph *) basenew(c, lgi_Null, bbox(32.f,32.f,32*8,32*4));
 	g->length = 1024;
 	g->buffer = calloc(1024,sizeof(float));
 	return (t_node *) g;
@@ -17,9 +17,13 @@ int graphmethod(t_node *n, int k, int x, int y) {
 				}
 				/* bypass */
 				float sample = d_popfloat();
-				m->buffer[m->cursor ++] = sample;
+				result -= 1;
 
-				d_putfloat(sample);
+				m->buffer[m->cursor ++] = sample;
+				if (n->numoutlets != 0) {
+					d_putfloat(sample);
+					result += 1;
+				}
 			}
 		} break;
 		case DRAW: {

@@ -1,6 +1,6 @@
 
 t_node *oscconstructor(t_class *c) {
-	return baseconstructor(c, lgi_Null, bbox(32.f,32.f,32*4,32));
+	return basenew(c, lgi_Null, bbox(32.f,32.f,32*4,32));
 }
 
 int oscmethod(t_node *n, int k, int x, int y) {

@@ -2,7 +2,7 @@
 /* the whole point of this object is to get found by the
  main loop and ran on a steady interval, it acts as a bypass. */
 t_node *tickconstructor(t_class *c) {
-	return baseconstructor(c, "TICK", bbox(32.f,32.f,32*2,32));
+	return basenew(c, "TICK", bbox(32.f,32.f,32*2,32));
 }
 
 /* todo: figure out how to make it so that we can still detect feedback messages,
@@ -18,7 +18,7 @@ int tickmethod(t_node *n, int k, int x, int y) {
 			if (result >= 2) {
 				t_value pass = pop();
 				int enabled = d_popint();
-				d_put(pass);
+				rt_pushvalue(pass);
 
 				result += 1;
 
